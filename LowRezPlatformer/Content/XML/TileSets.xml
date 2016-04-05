@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tileSets file="tiles" pixelPerTile="8">
+  <tileSet name="overworld">
+    <normal>
+      <tile name="plain" x="0" y="0" odds="0.7"/>
+      <tile name="grass" x="1" y="0" odds="0.1"/>
+      <tile name="flower" x="2" y="0" odds="0.1"/>
+      <tile name="flowers" x="3" y="0" odds="0.1"/>
+    </normal>
+    <blocking>
+      <tile name="tree0" x="4" y="0" odds="0.78"/>
+      <tile name="tree1" x="5" y="0" odds="0.2"/>
+      <tile name="rock" x="6" y="0" odds="0.02"/>
+    </blocking>
+    <interaction>
+      <tile name="caveEntry" x="0" y="1" odds="0.1" type="entry"/>
+      <tile name="smallHouse" x="1" y="1" odds="0.7" type="shop"/>
+      <tile name="castle" x="2" y="1" odds="0.2" type="shop" xExtraTile="1"/>
+    </interaction>
+    <deadly>
+      <tile name="swamp" x="0" y="2" odds="1" xExtraTile="1">
+        <animation frame="1" x="2" y="2" odds="1" xExtraTile="1"/>
+        <animation frame="2" x="4" y="2" odds="1" xExtraTile="1"/>
+      </tile>
+    </deadly>
+  </tileSet>
+  
+</tileSets>
