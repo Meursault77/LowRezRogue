@@ -27,15 +27,27 @@ namespace LowRezRogue {
             spriteRects[0] = new Rectangle(0,0,8,8);
 
             health = 10;
-            damage = 10;
+            damage = 5;
             armor = 5;
 
             spriteIndex = 0;
             animations = new Dictionary<string, Animation>();
+            InterfaceManager.UpdateHealth(health);
         }
 
         public void UpdateAnimation() {
 
+        }
+
+        public void TakeDamage(int damage) {
+            health -= damage;
+            if(health <= 0)
+            {
+                //DIE!!!
+            } else
+            {
+                InterfaceManager.UpdateHealth(health);
+            }
         }
     }
 
@@ -71,6 +83,7 @@ namespace LowRezRogue {
         public bool looping;
         public Rectangle[] rects;
 
+        public Action endOfAnimationAction;
 
         public Animation() {
 
@@ -114,8 +127,7 @@ namespace LowRezRogue {
         }
 
         
-        protected override void Initialize() {
-
+        protected override void Initialize() { 
             graphics.PreferredBackBufferHeight = 512;
             graphics.PreferredBackBufferWidth = 512;
             //TargetElapsedTime = TimeSpan.FromTicks(166666);
@@ -124,11 +136,11 @@ namespace LowRezRogue {
             SpriteBatchEx.GraphicsDevice = GraphicsDevice;
 
            camera = new Camera(GraphicsDevice.Viewport);
+            InterfaceManager.Initialize(Content);
 
             MapGeneration.InitTileSets();
             GenerateMap();
 
-            InterfaceManager.Initialize();
 
             lastKeyboardState = Keyboard.GetState();
             base.Initialize();
@@ -164,12 +176,11 @@ namespace LowRezRogue {
         double elapsedTime = 0;
 
         double animationFrameTimer = 0;
+        double uiTickTimer = 0;
 
         KeyboardState lastKeyboardState;
         KeyboardState keyboardState;
         Vector2 camPos;
-        int camXOffset;
-        int camYOffset;
 
         protected override void Update(GameTime gameTime) {
             if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -178,6 +189,7 @@ namespace LowRezRogue {
             double deltaTime = gameTime.ElapsedGameTime.TotalSeconds;
             elapsedTime += deltaTime;
             animationFrameTimer += deltaTime;
+            uiTickTimer += deltaTime;
        
             keyboardState = Keyboard.GetState();
             camPos = new Vector2();
@@ -198,57 +210,76 @@ namespace LowRezRogue {
             }
 
 
-
-
-
-            if(animationFrameTimer >= 0.33) {
-                for(int x = 0; x < mapWidth; x++)
+            if(gameScene == GameScene.game)
+            {
+                if(uiTickTimer >= 0.0333)
                 {
-                    for(int y = 0; y < mapHeight; y++)
+                    InterfaceManager.UpdateTick();
+                    uiTickTimer = 0;
+                }
+
+                if(animationFrameTimer >= 0.33)
+                {
+
+
+                    for(int x = 0; x < mapWidth; x++)
                     {
-                        if(map[x, y].animated)
+                        for(int y = 0; y < mapHeight; y++)
                         {
-                            map[x, y].UpdateAnimationIndex();
+                            if(map[x, y].animated)
+                            {
+                                map[x, y].UpdateAnimationIndex();
+                            }
                         }
                     }
+                    animationFrameTimer = 0.0;
                 }
-                animationFrameTimer = 0.0;
+                //came move depending on player position
+                //TODO: if moving right, show four tiles to the right, not only three.
+                //      if moving left leave it as is -> four free tiles visible to the left und three behind
+                if(player.position.X < 4)
+                    camPos.X = 32;
+                else if(player.position.X > mapWidth - 5)
+                    camPos.X = mapWidth * mapPixels - 64 / 2;
+                else
+                    camPos.X = (player.position.X + 0) * mapPixels;     //pos +1 for 4 tiles to right direction, instead of three 
+
+                if(player.position.Y < 4)
+                    camPos.Y = 32;
+                else if(player.position.Y > mapHeight - 5)
+                    camPos.Y = mapHeight * mapPixels - 64 / 2;
+                else
+                    camPos.Y = (player.position.Y + 0) * mapPixels;
+
+                camera.Update(camPos);
+
             }
 
 
-            //came move depending on player position
-            //TODO: if moving right, show four tiles to the right, not only three.
-            //      if moving left leave it as is -> four free tiles visible to the left und three behind
-            if(player.position.X < 4)
-                camPos.X = 32;
-            else if(player.position.X > mapWidth - 5)
-                camPos.X = mapWidth * mapPixels - 64 / 2;
-            else
-                camPos.X = (player.position.X + 0) * mapPixels;     //pos +1 for 4 tiles to right direction, instead of three 
-
-            if(player.position.Y < 4)
-                camPos.Y = 32;
-            else if(player.position.Y > mapHeight - 5)
-                camPos.Y = mapHeight * mapPixels - 64 / 2;
-            else
-                camPos.Y = (player.position.Y + 0) * mapPixels;
-
-            camera.Update(camPos);
-
-            InterfaceManager.Update(deltaTime);
 
             lastKeyboardState = keyboardState;
             base.Update(gameTime);
         }
 
         void ProcessPlayerTurn() {
-            if(keyboardState.IsKeyDown(Keys.F1) && lastKeyboardState.IsKeyUp(Keys.F1))
+            if(keyboardState.IsKeyDown(Keys.F12) && lastKeyboardState.IsKeyUp(Keys.F12))
             {
                 if(camera.zoom == 8f)
                     camera.zoom = 1f;
                 else if(camera.zoom == 1f)
                     camera.zoom = 8f;
             }
+
+            if(keyboardState.IsKeyDown(Keys.LeftControl) && lastKeyboardState.IsKeyUp(Keys.LeftControl))
+            {
+                InterfaceManager.ToggleAll();
+            }
+
+            if(keyboardState.IsKeyDown(Keys.LeftAlt) && lastKeyboardState.IsKeyUp(Keys.LeftAlt))
+            {
+                InterfaceManager.ShowDamage(5);
+            }
+
 
             //player movement
             Point positionCache = player.position;
@@ -284,17 +315,24 @@ namespace LowRezRogue {
                 case InteractionType.none:
                     {
                         //check if enemy is there, than attack
+                        //combat !!!
                         for(int e = 0; e < enemies.Count; e++)
                         {
                             if(enemies[e].position == player.position)
                             {
                                 Debug.WriteLine("Attacked enemy");
-                                enemies[e].health -= player.damage;
-                                if(enemies[e].health <= 0)
-                                    enemies.RemoveAt(e);
-                                else
-                                    player.position = positionCache;
+                                int damage = new Random().Next(player.damage - 1, player.damage + 2);
 
+                                enemies[e].health -= damage;
+                                if(enemies[e].health <= 0)
+                                {
+                                    //show interface
+                                    enemies.RemoveAt(e);
+                                } else
+                                {
+                                    InterfaceManager.ShowDamage(damage);
+                                    player.position = positionCache;
+                                }
                             }
                         }
                         break;
@@ -346,7 +384,6 @@ namespace LowRezRogue {
 
             GraphicsDevice.Clear(Color.TransparentBlack);
 
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.Transform);
 
             if(gameScene == GameScene.mainMenu)
             {
@@ -356,6 +393,7 @@ namespace LowRezRogue {
 
             } else if(gameScene == GameScene.game)
             {
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.Transform);
                 for(int x = 0; x < mapWidth; x++)
                 {
                     for(int y = 0; y < mapHeight; y++)
@@ -371,9 +409,12 @@ namespace LowRezRogue {
                 }
 
                 spriteBatch.Draw(playerAtlas, new Rectangle(player.position * new Point(mapPixels, mapPixels), new Point(mapPixels, mapPixels)), player.spriteRects[player.spriteIndex], Color.White);
+                spriteBatch.End();
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
+                InterfaceManager.Render(spriteBatch);
+                spriteBatch.End();
             }
 
-            InterfaceManager.Render(spriteBatch);
 
             spriteBatch.End();
 
