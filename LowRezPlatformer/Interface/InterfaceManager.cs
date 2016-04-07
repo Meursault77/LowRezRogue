@@ -17,21 +17,27 @@ namespace LowRezRogue.Interface {
         public Point closedPosition;
         public Point currentPosition;
         public Point size;
+        
 
         public Rectangle spriteRect;
 
         public UiTransitionState transitionState = UiTransitionState.open;
         public int transitionSpeed;
 
+        public bool alsoRenderClosed;
+        public bool openWithAll;
         bool closable = true;
         bool toClose;
         int toCloseTimer;
         int toCloseAfterTicks;
 
-        public UIObject(Point openPosition, Point closedPosition, Point size, UiTransitionState startState, Rectangle spriteRect, int transitionSpeed = 1) {
+        public UIObject(Point openPosition, Point closedPosition, Point size, UiTransitionState startState, Rectangle spriteRect, int transitionSpeed = 1, bool openWithAll = true, bool alsoRenderClosed = false) {
             this.openPosition = openPosition;
             this.closedPosition = closedPosition;
             this.size = size;
+
+            this.openWithAll = openWithAll;
+            this.alsoRenderClosed = alsoRenderClosed;
 
             transitionState = startState;
             this.transitionSpeed = transitionSpeed;
@@ -121,68 +127,113 @@ namespace LowRezRogue.Interface {
 
     public static class InterfaceManager {
 
+
+        static int damageMessageTicks = 30;
+
         static List<UIObject> uiObjects;
-        static UIObject damageText;
+        static UIObject damageLogo;
         static UIObject damageNum;
 
-        static UIObject healthText;
-        static UIObject healthNum;
+
 
         static Texture2D uiAtlas;
-        static Dictionary<int, Rectangle> damageSpriteRects;
+        static Dictionary<int, Rectangle> numberSprites;
+
+        static Rectangle damageRect;
+        static Rectangle deathRect;
+
+        static UIObject statsHealthLogo;
+        static UIObject statsHealthNum;
+
+        static UIObject statsDamageLogo;
+        static UIObject statsDamageNum;
+
+        static UIObject statsArmorLogo;
+        static UIObject statsArmorNum;
+
+        static UIObject statsRangeLogo;
+        static UIObject statsRangeNum;
+
+        public static UIObject rangeCombatLogo;
+        static Rectangle rangeCombatNoTarget;
+        static Rectangle rangeCombatHasTarget;
 
         public static void Initialize(ContentManager Content) {
             uiAtlas = Content.Load<Texture2D>("UI");
             uiObjects = new List<UIObject>();
-            InitDamageSpriteRects();
+            InitNumberSpriteRects();
+            damageRect = new Rectangle(30, 10, 20, 10);
+            deathRect = new Rectangle(30, 20,20,10);
 
-            uiObjects.Add(new UIObject(new Point(54, 20), new Point(64, 20), new Point(10, 10), UiTransitionState.open, new Rectangle(0, 0, 10, 10)));
+            rangeCombatHasTarget = new Rectangle(0, 40, 13, 10);
+            rangeCombatNoTarget = new Rectangle(0, 50, 13, 10);
 
-            damageText = new UIObject(new Point(34, 0), new Point(34, -10), new Point(30, 10), UiTransitionState.closed, new Rectangle(20, 10, 30, 10));
-            damageNum = new UIObject(new Point(24, 0), new Point(24, -10), new Point(10, 10), UiTransitionState.closed, new Rectangle(10, 0, 10, 10));
+            damageLogo = new UIObject(new Point(34, 0), new Point(34, -10), new Point(20, 10), UiTransitionState.closed, damageRect, openWithAll: false);
+            damageNum = new UIObject(new Point(54, 0), new Point(54, -10), new Point(10, 10), UiTransitionState.closed, new Rectangle(10, 0, 10, 10), openWithAll: false);
 
-            healthNum = new UIObject(new Point(0, 0), new Point(-10, 0), new Point(10, 10), UiTransitionState.open, new Rectangle(20, 0, 10, 10));
-            healthText = new UIObject(new Point(10, 0), new Point(10, -10), new Point(10, 10), UiTransitionState.open, new Rectangle(0, 30, 10, 10));
+            statsHealthNum = new UIObject(new Point(10, 0), new Point(-10, 0), new Point(10, 10), UiTransitionState.open, new Rectangle(20, 0, 10, 10), 2);
+            statsHealthLogo = new UIObject(new Point(0, 0), new Point(-10, 0), new Point(10, 10), UiTransitionState.open, new Rectangle(10, 30, 10, 10));
 
+            statsDamageNum = new UIObject(new Point(10,9), new Point(-10,9), new Point(10,10), UiTransitionState.open, new Rectangle(50,0,10,10), 2);
+            statsDamageLogo = new UIObject(new Point(0, 9), new Point(-10, 9), new Point(10, 10), UiTransitionState.open, new Rectangle(30,30,10,10));
 
-            uiObjects.Add(healthNum);
-            uiObjects.Add(healthText);
-            uiObjects.Add(damageText);
+            statsRangeNum = new UIObject(new Point(10, 18), new Point(-10,18), new Point(10,10), UiTransitionState.open, numberSprites[9], 2);
+            statsRangeLogo = new UIObject(new Point(0,18), new Point(-10, 18), new Point(10, 10), UiTransitionState.open, new Rectangle(40, 30, 10, 10));
+
+            statsArmorNum = new UIObject(new Point(10, 27), new Point(-10, 27), new Point(10, 10), UiTransitionState.open, numberSprites[3], 2);
+            statsArmorLogo = new UIObject(new Point(0, 27), new Point(-10, 27), new Point(10, 10), UiTransitionState.open, new Rectangle(20, 30, 10, 10));
+
+            rangeCombatLogo = new UIObject(new Point(51,54), new Point(64,54), new Point(13,10), UiTransitionState.closed, rangeCombatNoTarget, openWithAll: false);
+
+            uiObjects.Add(statsHealthNum);
+            uiObjects.Add(statsHealthLogo);
+            uiObjects.Add(statsDamageNum);
+            uiObjects.Add(statsDamageLogo);
+            uiObjects.Add(statsRangeNum);
+            uiObjects.Add(statsRangeLogo);
+            uiObjects.Add(statsArmorNum);
+            uiObjects.Add(statsArmorLogo);
+            uiObjects.Add(rangeCombatLogo);
+
             uiObjects.Add(damageNum);
+            uiObjects.Add(damageLogo);
+
+            //CloseAll();
+
         }
 
-        static void InitDamageSpriteRects() {
-            damageSpriteRects = new Dictionary<int, Rectangle>();
-            damageSpriteRects.Add(0, new Rectangle(80, 10, 10, 10));
-            damageSpriteRects.Add(1, new Rectangle(10, 0, 10, 10));
-            damageSpriteRects.Add(2, new Rectangle(20, 0, 10, 10));
-            damageSpriteRects.Add(3, new Rectangle(30, 0, 10, 10));
-            damageSpriteRects.Add(4, new Rectangle(40, 0, 10, 10));
-            damageSpriteRects.Add(5, new Rectangle(50, 0, 10, 10));
-            damageSpriteRects.Add(6, new Rectangle(60, 0, 10, 10));
-            damageSpriteRects.Add(7, new Rectangle(70, 0, 10, 10));
-            damageSpriteRects.Add(8, new Rectangle(80, 0, 10, 10));
-            damageSpriteRects.Add(9, new Rectangle(90, 0, 10, 10));
-            damageSpriteRects.Add(10, new Rectangle(100, 0, 10, 10));
-            damageSpriteRects.Add(11, new Rectangle(110, 0, 10, 10));
-            damageSpriteRects.Add(12, new Rectangle(120, 0, 10, 10));
-            damageSpriteRects.Add(13, new Rectangle(130, 0, 10, 10));
-            damageSpriteRects.Add(14, new Rectangle(140, 0, 10, 10));
-            damageSpriteRects.Add(15, new Rectangle(150, 0, 10, 10));
-            damageSpriteRects.Add(16, new Rectangle(90, 10, 10, 10));
-            damageSpriteRects.Add(17, new Rectangle(100, 10, 10, 10));
-            damageSpriteRects.Add(18, new Rectangle(110, 10, 10, 10));
-            damageSpriteRects.Add(19, new Rectangle(120, 10, 10, 10));
-            damageSpriteRects.Add(20, new Rectangle(130, 10, 10, 10));
-            damageSpriteRects.Add(21, new Rectangle(140, 10, 10, 10));
-            damageSpriteRects.Add(22, new Rectangle(150, 10, 10, 10));
+        static void InitNumberSpriteRects() {
+            numberSprites = new Dictionary<int, Rectangle>();
+            numberSprites.Add(0, new Rectangle(80, 10, 10, 10));
+            numberSprites.Add(1, new Rectangle(10, 0, 10, 10));
+            numberSprites.Add(2, new Rectangle(20, 0, 10, 10));
+            numberSprites.Add(3, new Rectangle(30, 0, 10, 10));
+            numberSprites.Add(4, new Rectangle(40, 0, 10, 10));
+            numberSprites.Add(5, new Rectangle(50, 0, 10, 10));
+            numberSprites.Add(6, new Rectangle(60, 0, 10, 10));
+            numberSprites.Add(7, new Rectangle(70, 0, 10, 10));
+            numberSprites.Add(8, new Rectangle(80, 0, 10, 10));
+            numberSprites.Add(9, new Rectangle(90, 0, 10, 10));
+            numberSprites.Add(10, new Rectangle(100, 0, 10, 10));
+            numberSprites.Add(11, new Rectangle(110, 0, 10, 10));
+            numberSprites.Add(12, new Rectangle(120, 0, 10, 10));
+            numberSprites.Add(13, new Rectangle(130, 0, 10, 10));
+            numberSprites.Add(14, new Rectangle(140, 0, 10, 10));
+            numberSprites.Add(15, new Rectangle(150, 0, 10, 10));
+            numberSprites.Add(16, new Rectangle(90, 10, 10, 10));
+            numberSprites.Add(17, new Rectangle(100, 10, 10, 10));
+            numberSprites.Add(18, new Rectangle(110, 10, 10, 10));
+            numberSprites.Add(19, new Rectangle(120, 10, 10, 10));
+            numberSprites.Add(20, new Rectangle(130, 10, 10, 10));
+            numberSprites.Add(21, new Rectangle(140, 10, 10, 10));
+            numberSprites.Add(22, new Rectangle(150, 10, 10, 10));
         }
 
 
         public static void Render(SpriteBatch spriteBatch) {
             foreach(UIObject obj in uiObjects)
             {
-                if(obj.transitionState != UiTransitionState.closed)
+                if(obj.transitionState != UiTransitionState.closed || obj.alsoRenderClosed)
                 {
                     spriteBatch.Draw(uiAtlas, new Rectangle(obj.currentPosition, obj.size), obj.spriteRect, Color.White);
                 }
@@ -200,7 +251,7 @@ namespace LowRezRogue.Interface {
         public static void OpenAll() {
             foreach(UIObject obj in uiObjects)
             {
-                if(obj.transitionState == UiTransitionState.open)
+                if(obj.transitionState == UiTransitionState.open || !obj.openWithAll)
                     continue;
 
                 obj.transitionState = UiTransitionState.transitionOpen;
@@ -211,7 +262,7 @@ namespace LowRezRogue.Interface {
         public static void CloseAll() {
             foreach(UIObject obj in uiObjects)
             {
-                if(obj.transitionState == UiTransitionState.closed)
+                if(obj.transitionState == UiTransitionState.closed || !obj.openWithAll)
                     continue;
 
                 obj.transitionState = UiTransitionState.transitionClose;
@@ -232,26 +283,101 @@ namespace LowRezRogue.Interface {
         public static void ShowDamage(int damage) {
             if(damage > 0 && damage < 23)
             {
-                damageNum.spriteRect = damageSpriteRects[damage];
-                damageNum.Open(true, 40);
-                damageText.Open(true, 40);
-            } else {
-                damageNum.spriteRect = damageSpriteRects[0];
-                damageNum.Open(true, 40);
-                damageText.Open(true, 40);
+                damageLogo.spriteRect = damageRect;
+                damageNum.spriteRect = numberSprites[damage];
+                damageNum.Open(true, damageMessageTicks);
+                damageLogo.Open(true, damageMessageTicks);
+            } else if(damage == 666){       //666 is the code for death!
+                //TODO: show something else when killing
+                damageLogo.spriteRect = deathRect;
+                damageNum.spriteRect = new Rectangle(0,20,10,10); //damageSpriteRects[damage];
+                damageNum.Open(true, damageMessageTicks);
+                damageLogo.Open(true, damageMessageTicks);
+            }
+        }
+
+        public static void ToggleRangeLogo(bool hasTarget) {
+            if(rangeCombatLogo.transitionState == UiTransitionState.closed || rangeCombatLogo.transitionState == UiTransitionState.transitionClose)
+            {
+                rangeCombatLogo.transitionState = UiTransitionState.transitionOpen;
+                if(hasTarget)
+                    rangeCombatLogo.spriteRect = rangeCombatHasTarget;
+                else
+                    rangeCombatLogo.spriteRect = rangeCombatNoTarget;
+            } else if(rangeCombatLogo.transitionState == UiTransitionState.open || rangeCombatLogo.transitionState == UiTransitionState.transitionOpen)
+            {
+                rangeCombatLogo.transitionState = UiTransitionState.transitionClose;
+            }
+
+        }
+
+
+        public static void ToggleHealth(bool forceOpen = false) {
+            if(forceOpen)
+            {
+                statsHealthLogo.Open();
+                statsHealthNum.Open();
+                return;
+            }
+
+            if(statsHealthLogo.transitionState != UiTransitionState.open && statsHealthNum.transitionState != UiTransitionState.open)
+            {
+                statsHealthLogo.Open();
+                statsHealthNum.Open();
+            } else if(statsHealthLogo.transitionState != UiTransitionState.closed && statsHealthNum.transitionState != UiTransitionState.closed)
+            {
+                statsHealthLogo.Close();
+                statsHealthNum.Close();
             }
         }
 
         public static void UpdateHealth(int health) {
             if(health > 0 && health < 23)
             {
-                healthNum.spriteRect = damageSpriteRects[health];
+                statsHealthNum.spriteRect = numberSprites[health];
 
             } else {
-                Debug.WriteLine($"Have no sprite for this number {health}");
-                damageNum.spriteRect = damageSpriteRects[0];
+                Debug.WriteLine($"Health, Have no sprite for this number {health}");
+                damageNum.spriteRect = numberSprites[0];
             }
         }
+
+        public static void UpdateArmor(int armor) {
+            if(armor > 0 && armor < 23)
+            {
+                statsArmorNum.spriteRect = numberSprites[armor];
+
+            } else
+            {
+                Debug.WriteLine($"Armor, Have no sprite for this number {armor}");
+                statsArmorNum.spriteRect = numberSprites[0];
+            }
+        }
+
+        public static void UpdateDamage(int damage) {
+            if(damage > 0 && damage < 23)
+            {
+                statsDamageNum.spriteRect = numberSprites[damage];
+
+            } else
+            {
+                Debug.WriteLine($"Damage, Have no sprite for this number {damage}");
+                statsDamageNum.spriteRect = numberSprites[0];
+            }
+        }
+
+        public static void UpdateRangeDamage(int rangeDamage) {
+            if(rangeDamage > 0 && rangeDamage < 23)
+            {
+                statsRangeNum.spriteRect = numberSprites[rangeDamage];
+
+            } else
+            {
+                Debug.WriteLine($"Damage, Have no sprite for this number {rangeDamage}");
+                statsRangeNum.spriteRect = numberSprites[0];
+            }
+        }
+
     }
 
    

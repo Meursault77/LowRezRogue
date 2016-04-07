@@ -55,3 +55,6 @@
 #begin XML/UserInterface.xml
 /copy:XML/UserInterface.xml
 
+#begin XML/Animations.xml
+/copy:XML/Animations.xml
+

@@ -82,11 +82,14 @@ namespace LowRezRogue {
             public TileType tileType;
             public int spriteIndex;
 
+            public Item itemOnTop;
+
             public Tile(bool walkable, TileType tileType) {
                 this.spriteRect = tileType.spriteRect;
                 this.walkable = walkable;
                 this.tileType = tileType;
                 this.spriteIndex = 0;
+                this.itemOnTop = null;
                 this.animated = spriteRect.Length > 1;
             }
 
@@ -352,7 +355,7 @@ namespace LowRezRogue {
             MapGeneration.mapWidth = width;
             MapGeneration.mapHeight = height;
             set = GetTileSet(TileSets.overworld);
-
+            
             int randomFillPercent = 41;
             if(mapWidth <= 32)
                 randomFillPercent = 35;
@@ -481,13 +484,13 @@ namespace LowRezRogue {
                             p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
                         }
                     }
-                    game.enemies.Add(new Enemy(p));
+                    game.enemies.Add(new Enemy(p, game.enemyAnimations));
                 }
             }
             Debug.WriteLine("Enemies created: " + game.enemies.Count);
 
             Room playerRoom = rooms[random.Next(0, rooms.Count)];
-            while(playerRoom == smallest)
+            while(playerRoom == smallest && rooms.Count > 1)
             {
                 playerRoom = rooms[random.Next(0, rooms.Count)];
             }
@@ -498,9 +501,8 @@ namespace LowRezRogue {
                 pos = playerRoom.tiles[random.Next(0, playerRoom.tiles.Count)];
             }
 
-            game.player = new Player(pos);
-
-
+            game.player = new Player(pos, game.playerAnimations);
+            
             return map;
         }
 

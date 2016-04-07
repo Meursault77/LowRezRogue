@@ -12,3 +12,4 @@ C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\obj\x86\Debug
 C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\obj\x86\Debug\LowRezRogue.pdb
 C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\UI.xnb
 C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\XML\UserInterface.xml
+C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\XML\Animations.xml
