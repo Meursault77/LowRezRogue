@@ -35,6 +35,11 @@ namespace LowRezRogue {
                 Matrix.CreateTranslation(new Vector3(bounds.Width * 0.5f, bounds.Height * 0.5f, 0));
         }
 
+        public void SetPosition(Point playerPos) {
+            position.X = playerPos.X * 8 + 4;
+            position.Y = playerPos.Y * 8 + 4;
+        }
+
         public Matrix Transform {
             get { return transform; }
         }
@@ -46,8 +51,37 @@ namespace LowRezRogue {
                 Matrix.CreateTranslation(new Vector3(bounds.Width * 0.5f, bounds.Height * 0.5f, 0));
         }
 
-        public void Update(Vector2 camMove) {
-            position = camMove;
+        int mapPixels = 8;
+
+        public void Update(Point player, int mapWidth, int mapHeight) {
+
+            //Vector2 player = playerPos.ToVector2();
+
+
+            if(player.X * mapPixels + 4< position.X)
+                position.X -= 1;
+            else if(player.X * mapPixels + 4 > position.X)
+                position.X += 1;            
+            //else
+            //   position.X = (playerPos.X + 0) * mapPixels + (mapPixels / 2);     //pos +1 for 4 tiles to right direction, instead of three 
+
+            if(player.Y * mapPixels + 4 < position.Y)
+                position.Y -= 1;
+            else if(player.Y * mapPixels + 4 > position.Y)
+                position.Y += 1;
+            //else
+            //    position.Y = (playerPos.Y + 0) * mapPixels + (mapPixels / 2);
+
+
+            if(position.X < 32)
+                position.X = 32;
+            if(position.Y < 32)
+                position.Y = 32;
+            if(position.X > (mapWidth * mapPixels) - 32)
+                position.X = (mapWidth * mapPixels) - 32;
+            if(position.Y > (mapHeight * mapPixels) - 32)
+                position.Y = (mapHeight * mapPixels) - 32;
+
             UpdateTransform();
         }
 

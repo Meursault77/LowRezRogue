@@ -158,6 +158,8 @@ namespace LowRezRogue.Interface {
         static Rectangle rangeCombatNoTarget;
         static Rectangle rangeCombatHasTarget;
 
+        public static UIObject sprintLogo;
+
         public static void Initialize(ContentManager Content) {
             uiAtlas = Content.Load<Texture2D>("UI");
             uiObjects = new List<UIObject>();
@@ -165,8 +167,7 @@ namespace LowRezRogue.Interface {
             damageRect = new Rectangle(30, 10, 20, 10);
             deathRect = new Rectangle(30, 20,20,10);
 
-            rangeCombatHasTarget = new Rectangle(0, 40, 13, 10);
-            rangeCombatNoTarget = new Rectangle(0, 50, 13, 10);
+
 
             damageLogo = new UIObject(new Point(34, 0), new Point(34, -10), new Point(20, 10), UiTransitionState.closed, damageRect, openWithAll: false);
             damageNum = new UIObject(new Point(54, 0), new Point(54, -10), new Point(10, 10), UiTransitionState.closed, new Rectangle(10, 0, 10, 10), openWithAll: false);
@@ -184,6 +185,12 @@ namespace LowRezRogue.Interface {
             statsArmorLogo = new UIObject(new Point(0, 27), new Point(-10, 27), new Point(10, 10), UiTransitionState.open, new Rectangle(20, 30, 10, 10));
 
             rangeCombatLogo = new UIObject(new Point(51,54), new Point(64,54), new Point(13,10), UiTransitionState.closed, rangeCombatNoTarget, openWithAll: false);
+            rangeCombatHasTarget = new Rectangle(0, 40, 13, 10);
+            rangeCombatNoTarget = new Rectangle(0, 50, 13, 10);
+
+            sprintLogo = new UIObject(new Point(51, 43), new Point(58, 43), new Point(13, 11), UiTransitionState.closed, new Rectangle(0, 60, 13, 11), openWithAll: false, alsoRenderClosed: true);
+
+
 
             uiObjects.Add(statsHealthNum);
             uiObjects.Add(statsHealthLogo);
@@ -194,6 +201,7 @@ namespace LowRezRogue.Interface {
             uiObjects.Add(statsArmorNum);
             uiObjects.Add(statsArmorLogo);
             uiObjects.Add(rangeCombatLogo);
+            uiObjects.Add(sprintLogo);
 
             uiObjects.Add(damageNum);
             uiObjects.Add(damageLogo);
@@ -311,6 +319,27 @@ namespace LowRezRogue.Interface {
 
         }
 
+        public static void ToggleSprint(bool offScreen = false) {
+ 
+            if(sprintLogo.transitionState != UiTransitionState.open)
+            {
+                sprintLogo.Open();
+            } else if(sprintLogo.transitionState != UiTransitionState.closed)
+            {
+                sprintLogo.Close();
+            }
+        }
+
+        public static void ActivateSprint(bool activate) {
+            if(activate)
+            {
+                sprintLogo.alsoRenderClosed = true; 
+            } else
+            {
+                sprintLogo.alsoRenderClosed = false;
+            }
+        }
+    
 
         public static void ToggleHealth(bool forceOpen = false) {
             if(forceOpen)
