@@ -235,7 +235,7 @@ namespace LowRezRogue {
         Camera camera;
 
         public enum GameScene { mainMenu, game, pause, unitInfo, death }
-        public static GameScene gameScene = GameScene.game;
+        public static GameScene gameScene = GameScene.mainMenu;
 
         public enum GameState { playerMove, aiTurn, playerRangeCombat, sprint, animation }
         GameState gameState = GameState.playerMove;

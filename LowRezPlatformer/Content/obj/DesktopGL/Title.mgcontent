@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PipelineBuildEvent xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <SourceFile>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Title.png</SourceFile>
-  <SourceTime>2016-04-08T23:25:03.0311384+02:00</SourceTime>
+  <SourceTime>2016-04-09T19:51:35.7832568+02:00</SourceTime>
   <DestFile>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/bin/DesktopGL/Title.xnb</DestFile>
-  <DestTime>2016-04-08T23:25:05.0731934+02:00</DestTime>
+  <DestTime>2016-04-09T19:51:38.8737186+02:00</DestTime>
   <Importer>TextureImporter</Importer>
   <ImporterTime>2016-03-16T03:18:04+01:00</ImporterTime>
   <Processor>TextureProcessor</Processor>

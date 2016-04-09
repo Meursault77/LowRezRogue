@@ -72,5 +72,10 @@
       <frame x="8" y="9"/>
       <frame x="9" y="9"/>
     </anim>
+    <anim name="pressA" looping="True">
+      <frame x="0" y="10"/>
+      <frame x="1" y="10"/>
+      <frame x="2" y="10"/>
+    </anim>
   </mainMenu>
 </animations>
