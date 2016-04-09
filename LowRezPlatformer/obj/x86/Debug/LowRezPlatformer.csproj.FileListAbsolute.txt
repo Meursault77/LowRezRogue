@@ -14,3 +14,4 @@ C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL
 C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\XML\UserInterface.xml
 C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\XML\Animations.xml
 C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\Title.xnb
+C:\Users\Sören\Documents\Schafi\LowRezPlatformer\LowRezPlatformer\bin\DesktopGL\x86\Debug\Content\Menus.xnb

@@ -24,11 +24,8 @@ namespace LowRezRogue {
             bounds = viewport.Bounds;
             position = new Vector2(viewport.Width/16, viewport.Height/16);
 
-            if(main == null)
-                main = this;
-            else
-                Debug.WriteLine("We have at least two cameras. First camera stays main cam.");
-
+            main = this;
+            
             onlyZoom = Matrix.CreateTranslation(new Vector3(-position.X, -position.Y, 0)) *
                 Matrix.CreateRotationZ(rotation) *
                 Matrix.CreateScale(new Vector3(zoom, zoom, 1)) *

@@ -45,6 +45,7 @@
     <Compile Include="Map Generation\PerlinNoise.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scenes\FadeScreen.cs" />
     <Compile Include="Scenes\MainMenu.cs" />
     <Compile Include="SpriteBatchEx.cs" />
   </ItemGroup>

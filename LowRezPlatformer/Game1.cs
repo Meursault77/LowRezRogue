@@ -235,7 +235,7 @@ namespace LowRezRogue {
         Camera camera;
 
         public enum GameScene { mainMenu, game, pause, unitInfo, death }
-        public static GameScene gameScene = GameScene.mainMenu;
+        public static GameScene gameScene = GameScene.game;
 
         public enum GameState { playerMove, aiTurn, playerRangeCombat, sprint, animation }
         GameState gameState = GameState.playerMove;
@@ -258,6 +258,7 @@ namespace LowRezRogue {
 
         Texture2D tileAtlas;
         Texture2D playerAtlas;
+        Texture2D menuAtlas;
 
         public Dictionary<string, Animation> playerAnimations;
         public Dictionary<string, Animation> enemyAnimations;
@@ -292,6 +293,8 @@ namespace LowRezRogue {
 
             mainMenu = new MainMenu();
             mainMenu.Initialize(Content);
+
+            FadeScreen.Inititalize();
 
             random = new Random();
 
@@ -389,12 +392,15 @@ namespace LowRezRogue {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             tileAtlas = Content.Load<Texture2D>("tiles");
             playerAtlas = Content.Load<Texture2D>("player");
+            menuAtlas = Content.Load<Texture2D>("Menus");
+            
         }
 
         protected override void UnloadContent() {
             spriteBatch.Dispose();
             tileAtlas.Dispose();
             playerAtlas.Dispose();
+            menuAtlas.Dispose();
         }
 
 
@@ -566,6 +572,7 @@ namespace LowRezRogue {
                 executeEndOfFrame.Dequeue()();
             }
 
+            FadeScreen.Update(deltaTime);
 
             lastKeyboardState = keyboardState;
             base.Update(gameTime);
@@ -713,9 +720,9 @@ namespace LowRezRogue {
         void ProcessPlayerTurn() {
 
 
-            bool madeAction = false;           
-         
+            bool madeAction = false;
 
+            //Debug.WriteLine($"Process player turn. {gameState}");
             //player movement
             Point positionCache = player.position;
 
@@ -826,7 +833,7 @@ namespace LowRezRogue {
                     }
             }
 
-            if(madeAction)
+            if(madeAction && gameState != GameState.animation)
             {
                 EndTurn();
                 return;
@@ -835,10 +842,14 @@ namespace LowRezRogue {
         }
 
         void TransitionToMap(Map transitionTo, Point positionCache) {
-            currentMap.playerPositionOnLeave = positionCache;
-            currentMap = transitionTo;
-            player.position = transitionTo.playerPositionOnLeave;
-            camera.JumpToPosition(player.position);
+            gameState = GameState.animation;
+            Debug.WriteLine(gameState);
+            FadeScreen.StartFadeScreen(0.3, 
+                () => { currentMap.playerPositionOnLeave = positionCache;
+                currentMap = transitionTo;
+                player.position = transitionTo.playerPositionOnLeave;
+                camera.JumpToPosition(player.position);
+            }, () => { gameState = GameState.playerMove; });
         }
 
         void EndTurn() {
@@ -1046,6 +1057,7 @@ namespace LowRezRogue {
             Window.Title = (1 / gameTime.ElapsedGameTime.TotalSeconds).ToString();
             GraphicsDevice.Clear(Color.TransparentBlack);
 
+
             if(gameScene == GameScene.mainMenu)
             {
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
@@ -1062,6 +1074,7 @@ namespace LowRezRogue {
             } 
             else if(gameScene == GameScene.game)
             {
+
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.Transform);
 
                 for(int x = 0; x < currentMap.mapWidth; x++)
@@ -1096,9 +1109,9 @@ namespace LowRezRogue {
                 InterfaceManager.Render(spriteBatch);
                 spriteBatch.End();
             }
-
-
             spriteBatch.End();
+
+            FadeScreen.Render(spriteBatch, menuAtlas);
 
             base.Draw(gameTime);
         }

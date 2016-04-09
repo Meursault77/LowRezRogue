@@ -201,7 +201,9 @@ namespace LowRezRogue {
             {
                 if(triggerPlayerSmash)
                 {
-                    player.TriggerAnimation("smash", () => { animationFrameTime = 0.166; player.TriggerAnimation("idle2"); LowRezRogue.gameScene = LowRezRogue.GameScene.game; this.UnloadContent(); });
+                    player.TriggerAnimation("smash", () => { animationFrameTime = 0.166; player.TriggerAnimation("idle2"); FadeScreen.StartFadeScreen(0.5 ,
+                        () => { LowRezRogue.gameScene = LowRezRogue.GameScene.game; this.UnloadContent(); }, null); });
+
                     triggerPlayerSmash = false;
                 }
                 if(moveBackground)
