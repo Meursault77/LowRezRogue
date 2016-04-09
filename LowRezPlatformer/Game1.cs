@@ -203,6 +203,28 @@ namespace LowRezRogue {
     }
 
 
+    public class Map {
+
+        public int mapWidth;
+        public int mapHeight;
+
+        public Tile[,] map;
+        public List<Room> rooms;
+        public List<Enemy> enemies;
+        public List<Item> items;
+
+        public Point playerPositionOnLeave;
+        public Dictionary<Point, Map> entries;
+
+
+        public Map(int width, int height) {
+            mapWidth = width;
+            mapHeight = height;
+            map = new Tile[width, height];
+            entries = new Dictionary<Point, Map>();
+        }
+    }
+
 
 
     public class LowRezRogue : Game {
@@ -213,7 +235,7 @@ namespace LowRezRogue {
         Camera camera;
 
         public enum GameScene { mainMenu, game, pause, unitInfo, death }
-        public static GameScene gameScene = GameScene.mainMenu;
+        public static GameScene gameScene = GameScene.game;
 
         public enum GameState { playerMove, aiTurn, playerRangeCombat, sprint, animation }
         GameState gameState = GameState.playerMove;
@@ -221,12 +243,16 @@ namespace LowRezRogue {
         int sprintCounter = 0;
 
         public Player player;
-        public List<Enemy> enemies;
-        Tile[,] map;
+        //public List<Enemy> enemies;
+
+
+        // [0] -> overworld, [1] - [5] -> dungeons
+        public Map[] allMaps;
+        Map currentMap;
 
         int mapPixels = 8;
-        int mapWidth = 64;
-        int mapHeight = 64;
+       // int mapWidth = 64;
+       // int mapHeight = 64;
 
         Random random;
 
@@ -260,7 +286,7 @@ namespace LowRezRogue {
             LoadAnimationData();
 
             MapGeneration.InitTileSets();
-            GenerateMap();
+            GenerateMaps();
 
             camera.SetPosition(player.position);
 
@@ -273,17 +299,45 @@ namespace LowRezRogue {
             base.Initialize();
         }
 
-        void GenerateMap() {
+        void GenerateMaps() {
             Random random = new Random();
-            map = CreateDungeon(this, mapWidth, mapHeight, false); //CreateOverworld(mapWidth, mapHeight);      //new Tile[mapWidth, mapHeight];
-            /*for(int x = 0; x < mapWidth; x++)
+
+            allMaps = new Map[6];
+            allMaps[0] = CreateDungeon(this, 64, 64, 33, isOverworld: true);
+
+            allMaps[1] = CreateDungeon(this, 48, 48, 35);
+            allMaps[2] = CreateDungeon(this, 32, 32, 36);
+            allMaps[3] = CreateDungeon(this, 64, 64, 38);
+            allMaps[4] = CreateDungeon(this, 48, 48, 40);
+            allMaps[5] = CreateDungeon(this, 64, 64, 40);
+            currentMap = allMaps[0];
+
+
+
+            //create connections
+            /*for(int i = 1; i <= 5; i++)
             {
-                for(int y = 0; y < mapHeight; y++)
+                foreach(Point key in allMaps[i].entries.Keys)
                 {
-                    Rectangle[] rects = { new Rectangle(random.Next(0, 2) * mapPixels, 0 * mapPixels, mapPixels, mapPixels) };
-                    map[x, y] = new Tile(rects, true, null);
+                    allMaps[i].entries[key] = allMaps[0];
                 }
             }*/
+
+            int j = 1;
+            HashSet<Point> entries = new HashSet<Point>();
+            foreach(KeyValuePair<Point, Map> pair in allMaps[0].entries)
+            {
+                entries.Add(pair.Key);
+            }
+            foreach(Point key in entries)
+            {
+                allMaps[0].entries[key] = allMaps[j];
+                j++;
+            }
+
+
+            player = new Player(currentMap.playerPositionOnLeave, playerAnimations);
+            //player.position = new Point(24, 24);
         }
 
         void LoadAnimationData() {
@@ -368,7 +422,7 @@ namespace LowRezRogue {
             elapsedTime += deltaTime;
             animationFrameTimer += deltaTime;
             uiTickTimer += deltaTime;
-       
+
             keyboardState = Keyboard.GetState();
 
             if(gameScene == GameScene.game)
@@ -412,7 +466,7 @@ namespace LowRezRogue {
 
                 if(uiTickTimer >= 0.0333)
                 {
-                    camera.Update(player.position, mapWidth, mapHeight);
+                    camera.Update(player.position, currentMap.mapWidth, currentMap.mapHeight);
                     InterfaceManager.UpdateTick();
                     uiTickTimer = 0;
                 }
@@ -420,18 +474,18 @@ namespace LowRezRogue {
                 if(animationFrameTimer >= 0.166)
                 {
                     player.UpdateAnimation();
-                    foreach(Enemy enem in enemies)
+                    foreach(Enemy enem in currentMap.enemies)
                     {
                         enem.UpdateAnimation();
                     }
 
-                    for(int x = 0; x < mapWidth; x++)
+                    for(int x = 0; x < currentMap.mapWidth; x++)
                     {
-                        for(int y = 0; y < mapHeight; y++)
+                        for(int y = 0; y < currentMap.mapHeight; y++)
                         {
-                            if(map[x, y].animated)
+                            if(currentMap.map[x, y].animated)
                             {
-                                map[x, y].UpdateAnimationIndex();
+                                currentMap.map[x, y].UpdateAnimationIndex();
                             }
                         }
                     }
@@ -465,8 +519,24 @@ namespace LowRezRogue {
                 {
                     player.noDamage = !player.noDamage;
                 }
-
+                if(keyboardState.IsKeyDown(Keys.F5) && lastKeyboardState.IsKeyUp(Keys.F5))
+                {
+                    if(currentMap == allMaps[0])
+                        currentMap = allMaps[1];
+                    else if(currentMap == allMaps[1])
+                        currentMap = allMaps[2];
+                    else if(currentMap == allMaps[2])
+                        currentMap = allMaps[3];
+                    else if(currentMap == allMaps[3])
+                        currentMap = allMaps[4];
+                    else if(currentMap == allMaps[4])
+                        currentMap = allMaps[5];
+                    else if(currentMap == allMaps[5])
+                        currentMap = allMaps[0];
+                }
             }
+
+
 
             if(gameScene == GameScene.mainMenu)
             {
@@ -531,7 +601,7 @@ namespace LowRezRogue {
 
                     if(!visited.Contains(p) && dist <= player.visionRange)
                     {
-                        if(IsInMapRange(p.X, p.Y) && map[p.X, p.Y].walkable)
+                        if(IsInMapRange(p.X, p.Y) && currentMap.map[p.X, p.Y].walkable)
                             player.rangeCombatTiles.Add(p);
 
                         if(!visited.Contains(new Point(p.X + 1, p.Y)))
@@ -552,10 +622,10 @@ namespace LowRezRogue {
             player.enemiesInRange = new List<Enemy>();
             foreach(Point p in player.rangeCombatTiles)
             {
-                for(int i = 0; i < enemies.Count; i++)
+                for(int i = 0; i < currentMap.enemies.Count; i++)
                 {
-                    if(p == enemies[i].position && !enemies[i].dead)
-                        player.enemiesInRange.Add(enemies[i]);
+                    if(p == currentMap.enemies[i].position && !currentMap.enemies[i].dead)
+                        player.enemiesInRange.Add(currentMap.enemies[i]);
                 }
             }
 
@@ -612,7 +682,7 @@ namespace LowRezRogue {
                 {
                     InterfaceManager.ShowDamage(666);       //666 is the code for death UI
                     enem.dead = true;
-                    enem.TriggerAnimation("die", () => enemies.Remove(enem));
+                    enem.TriggerAnimation("die", () => currentMap.enemies.Remove(enem));
 
                 } else
                 {
@@ -630,7 +700,7 @@ namespace LowRezRogue {
                     //show interface
                     InterfaceManager.ShowDamage(666);       //666 is the code for death UI
                     enem.dead = true;
-                    enem.TriggerAnimation("die", () => enemies.Remove(enem));
+                    enem.TriggerAnimation("die", () => currentMap.enemies.Remove(enem));
                     player.position = posCache;
                 } else
                 {
@@ -651,53 +721,53 @@ namespace LowRezRogue {
 
 
             if(keyboardState.IsKeyDown(Keys.Left) && lastKeyboardState.IsKeyUp(Keys.Left) && 
-                player.position.X > 0 && map[player.position.X - 1, player.position.Y].walkable)
+                player.position.X > 0 && currentMap.map[player.position.X - 1, player.position.Y].walkable)
             {
                 madeAction = true;
                 player.position.X -= 1;
                 if(IsTileFree(player.position))
                     positionCache = player.position;
 
-                if(gameState == GameState.sprint && map[player.position.X - 1, player.position.Y].walkable)
+                if(gameState == GameState.sprint && currentMap.map[player.position.X - 1, player.position.Y].walkable)
                 {
                     player.position.X -= player.sprintBonusMoves;
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Right) && lastKeyboardState.IsKeyUp(Keys.Right) && 
-                player.position.X < mapWidth - 1 && map[player.position.X + 1, player.position.Y].walkable)
+                player.position.X < currentMap.mapWidth - 1 && currentMap.map[player.position.X + 1, player.position.Y].walkable)
             {
                 madeAction = true;
                 player.position.X += 1;
                 if(IsTileFree(player.position))
                     positionCache = player.position;
 
-                if(gameState == GameState.sprint && map[player.position.X + 1, player.position.Y].walkable)
+                if(gameState == GameState.sprint && currentMap.map[player.position.X + 1, player.position.Y].walkable)
                 {
                     player.position.X += player.sprintBonusMoves;
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Up) && lastKeyboardState.IsKeyUp(Keys.Up) && 
-                player.position.Y > 0 && map[player.position.X, player.position.Y - 1].walkable)
+                player.position.Y > 0 && currentMap.map[player.position.X, player.position.Y - 1].walkable)
             {
                 madeAction = true;
                 player.position.Y -= 1;
                 if(IsTileFree(player.position))
                     positionCache = player.position;
 
-                if(gameState == GameState.sprint && map[player.position.X, player.position.Y - 1].walkable)
+                if(gameState == GameState.sprint && currentMap.map[player.position.X, player.position.Y - 1].walkable)
                 {
                     player.position.Y -= player.sprintBonusMoves;
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Down) && lastKeyboardState.IsKeyUp(Keys.Down) && 
-                player.position.Y < mapHeight - 1 && map[player.position.X, player.position.Y + 1].walkable)
+                player.position.Y < currentMap.mapHeight - 1 && currentMap.map[player.position.X, player.position.Y + 1].walkable)
             {
                 madeAction = true;
                 player.position.Y += 1;
                 if(IsTileFree(player.position))
                     positionCache = player.position;
 
-                if(gameState == GameState.sprint && map[player.position.X, player.position.Y + 1].walkable)
+                if(gameState == GameState.sprint && currentMap.map[player.position.X, player.position.Y + 1].walkable)
                 {
                     player.position.Y += player.sprintBonusMoves;
                 
@@ -713,34 +783,41 @@ namespace LowRezRogue {
                 return;
             }
 
-            if(map[player.position.X, player.position.Y].tileType.tileType == TileTypes.deadly)
+            if(currentMap.map[player.position.X, player.position.Y].tileType.tileType == TileTypes.deadly)
             {
                 //Player die!
                 Debug.WriteLine("Diiiiiiieee!");
             }
 
+            if(currentMap.map[player.position.X, player.position.Y].itemOnTop != null)
+            {
 
-            switch(map[player.position.X, player.position.Y].tileType.interaction)
+            }
+
+            switch(currentMap.map[player.position.X, player.position.Y].tileType.interaction)
             {
                 case InteractionType.none:
                     {
                         //check if enemy is there, than attack
                         //combat !!!
-                        for(int e = 0; e < enemies.Count; e++)
+                        for(int e = 0; e < currentMap.enemies.Count; e++)
                         {
-                            if(enemies[e].position == player.position && !enemies[e].dead)
+                            if(currentMap.enemies[e].position == player.position && !currentMap.enemies[e].dead)
                             {                               
-                                PlayerAttack(enemies[e], positionCache);                              
+                                PlayerAttack(currentMap.enemies[e], positionCache);                              
                             }
                         }
                         break;
                     }
                 case InteractionType.entry:
                     {
+                        TransitionToMap(currentMap.entries[player.position], positionCache);
                         break;
                     }
-                case InteractionType.exit:
+                case InteractionType.castle:
                     {
+                        Debug.WriteLine("Theeee Castle!!!");
+                        player.position = positionCache;
                         break;
                     }
                 case InteractionType.shop:
@@ -755,6 +832,13 @@ namespace LowRezRogue {
                 return;
             }
 
+        }
+
+        void TransitionToMap(Map transitionTo, Point positionCache) {
+            currentMap.playerPositionOnLeave = positionCache;
+            currentMap = transitionTo;
+            player.position = transitionTo.playerPositionOnLeave;
+            camera.JumpToPosition(player.position);
         }
 
         void EndTurn() {
@@ -786,10 +870,10 @@ namespace LowRezRogue {
             Debug.WriteLine("Processing enemy AI");
             
 
-            for(int i = 0; i < enemies.Count; i++)
+            for(int i = 0; i < currentMap.enemies.Count; i++)
             {
 
-                var enem = enemies[i];
+                var enem = currentMap.enemies[i];
                 if(enem.dead)
                     continue;
 
@@ -909,7 +993,7 @@ namespace LowRezRogue {
 
 
         bool IsInMapRange(int x, int y) {
-            return x >= 0 && x < mapWidth && y >= 0 && y < mapHeight;
+            return x >= 0 && x < currentMap.mapWidth && y >= 0 && y < currentMap.mapHeight;
         }
 
         bool IsInMapRange(Point p) {
@@ -925,13 +1009,13 @@ namespace LowRezRogue {
             if(!IsInMapRange(p))
                 return false;
 
-            if(!map[p.X,p.Y].walkable || player.position == p)
+            if(!currentMap.map[p.X,p.Y].walkable || player.position == p)
             {
                 return false;
             }
-            for(int i = 0; i < enemies.Count; i++)
+            for(int i = 0; i < currentMap.enemies.Count; i++)
             {
-                if(enemies[i].position == p)
+                if(currentMap.enemies[i].position == p)
                     return false;
             }
             return true;
@@ -980,11 +1064,11 @@ namespace LowRezRogue {
             {
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.Transform);
 
-                for(int x = 0; x < mapWidth; x++)
+                for(int x = 0; x < currentMap.mapWidth; x++)
                 {
-                    for(int y = 0; y < mapHeight; y++)
+                    for(int y = 0; y < currentMap.mapHeight; y++)
                     {
-                        spriteBatch.Draw(tileAtlas, new Rectangle(x * mapPixels, y * mapPixels, mapPixels, mapPixels), map[x, y].spriteRect[map[x,y].spriteIndex], Color.White);
+                        spriteBatch.Draw(tileAtlas, new Rectangle(x * mapPixels, y * mapPixels, mapPixels, mapPixels), currentMap.map[x, y].spriteRect[currentMap.map[x,y].spriteIndex], Color.White);
 
                     }
                 }
@@ -1001,9 +1085,9 @@ namespace LowRezRogue {
                     }
                 }
                
-                for(int i = 0; i < enemies.Count; i++)
+                for(int i = 0; i < currentMap.enemies.Count; i++)
                 {
-                    spriteBatch.Draw(playerAtlas, new Rectangle(enemies[i].position * new Point(mapPixels, mapPixels), new Point(mapPixels, mapPixels)),enemies[i].spriteRect, Color.White);
+                    spriteBatch.Draw(playerAtlas, new Rectangle(currentMap.enemies[i].position * new Point(mapPixels, mapPixels), new Point(mapPixels, mapPixels)), currentMap.enemies[i].spriteRect, Color.White);
                 }
 
                 spriteBatch.Draw(playerAtlas, new Rectangle(player.position * new Point(mapPixels, mapPixels), new Point(mapPixels, mapPixels)), player.spriteRect, Color.White);

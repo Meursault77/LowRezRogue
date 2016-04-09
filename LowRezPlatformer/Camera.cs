@@ -85,6 +85,11 @@ namespace LowRezRogue {
             UpdateTransform();
         }
 
+        public void JumpToPosition(Point pos) {
+            position = new Vector2(pos.X * mapPixels + 4, pos.Y * mapPixels + 4);
+            UpdateTransform();
+        }
+
         public Point ToWorld(Point mousePosition) {
             return Vector2.Transform(mousePosition.ToVector2(), Matrix.Invert(Transform)).ToPoint();
         }

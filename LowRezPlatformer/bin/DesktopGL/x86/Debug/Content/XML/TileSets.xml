@@ -15,7 +15,7 @@
     <interaction>
       <tile name="caveEntry" x="0" y="1" odds="0.1" type="entry"/>
       <tile name="smallHouse" x="1" y="1" odds="0.7" type="shop"/>
-      <tile name="castle" x="2" y="1" odds="0.2" type="shop" xExtraTile="1"/>
+      <tile name="castle" x="2" y="1" odds="0.2" type="castle" xExtraTile="1"/>
     </interaction>
     <deadly>
       <tile name="swamp" x="0" y="2" odds="1" xExtraTile="1">

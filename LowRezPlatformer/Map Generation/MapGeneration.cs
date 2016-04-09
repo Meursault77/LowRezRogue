@@ -101,7 +101,7 @@ namespace LowRezRogue {
 
         }
 
-        public enum InteractionType { none, shop, entry, exit }
+        public enum InteractionType { none, shop, entry, castle }
 
         public enum TileTypes { normal, blocking, interaction, deadly }
 
@@ -335,7 +335,7 @@ namespace LowRezRogue {
                     return type;
             }
 
-            Debug.WriteLine("GetRandomTileType: SOmethig went wrong. Couldnt use odds. Returning something fully random.");
+            //Debug.WriteLine("GetRandomTileType: SOmethig went wrong. Couldnt use odds. Returning something fully random.");
             return typeArray[random.Next(0, typeArray.Length)];
         }
 
@@ -347,37 +347,34 @@ namespace LowRezRogue {
         static List<Room> rooms;
         static Room mainRoom;
         static TileSet set;
+        static Map workingOn;
+        static int tilesPerEnemy = 50;
 
-        static int tilesPerEnemy = 30;
 
-
-        public static Tile[,] CreateDungeon(LowRezRogue game, int width, int height, bool openCave) {
+        public static Map CreateDungeon(LowRezRogue game, int width, int height, int blockingTilePercentage, bool openCave = false, bool isOverworld = false) {
             MapGeneration.mapWidth = width;
             MapGeneration.mapHeight = height;
             set = GetTileSet(TileSets.overworld);
-            
-            int randomFillPercent = 41;
-            if(mapWidth <= 32)
-                randomFillPercent = 35;
-            else
-                randomFillPercent = 41;
 
+            Map newMap = new Map(width, height);
+            workingOn = newMap;
             int openess = openCave ? 4 : 3;
+            mainRoom = null;
 
-            map = new Tile[mapWidth, mapHeight];
+            map = new Tile[width, height];
             rooms = new List<Room>();
 
 
             Random random = new Random();// 654320);
             
-            for(int x = 0; x < mapWidth; x++)
+            for(int x = 0; x < width; x++)
             {
-                for(int y = 0; y < mapHeight; y++)
+                for(int y = 0; y < height; y++)
                 {
-                    if(x == 0 || x == mapWidth - 1 || y == 0 || y == mapHeight - 1)
+                    if(x == 0 || x == width - 1 || y == 0 || y == height - 1)
                         map[x, y] = new Tile(false, GetRandomTileType(set.blocking));
                     else
-                        map[x, y] = (random.Next(0, 100) < randomFillPercent) ? new Tile(false, GetRandomTileType(set.blocking)) : new Tile(true, GetRandomTileType(set.normals));
+                        map[x, y] = (random.Next(0, 100) < blockingTilePercentage) ? new Tile(false, GetRandomTileType(set.blocking)) : new Tile(true, GetRandomTileType(set.normals));
                     
                 }
             }
@@ -385,9 +382,9 @@ namespace LowRezRogue {
             //Smoothing
             for(int i = 0; i < smoothIterations; i++)
             {
-                for(int x = 0; x < mapWidth; x++)
+                for(int x = 0; x < width; x++)
                 {
-                    for(int y = 0; y < mapHeight; y++)
+                    for(int y = 0; y < height; y++)
                     {
                         int wallCount = 0;
                         for(int neighX = x - 1; neighX <= x + 1; neighX++)
@@ -416,11 +413,11 @@ namespace LowRezRogue {
             }
 
             //flood fill, checking for walkable rooms
-            bool[,] isTileVisited = new bool[mapWidth, mapHeight];
+            bool[,] isTileVisited = new bool[width, height];
             
-            for(int x = 0; x < mapWidth; x++)
+            for(int x = 0; x < width; x++)
             {
-                for(int y = 0; y < mapHeight; y++)
+                for(int y = 0; y < height; y++)
                 {
                     if(isTileVisited[x,y] == false && map[x,y].walkable == true)
                     {
@@ -432,14 +429,16 @@ namespace LowRezRogue {
 
             for(int i = 0; i < rooms.Count; i++)
             {
-                Debug.WriteLine($"Room size: {rooms[i].tiles.Count}, #edge tiles: {rooms[i].edgeTiles.Count}, Connected Rooms {rooms[i].connectedRooms.Count}");
+               // Debug.WriteLine($"Room size: {rooms[i].tiles.Count}, #edge tiles: {rooms[i].edgeTiles.Count}, Connected Rooms {rooms[i].connectedRooms.Count}");
                 if(rooms[i].roomSize < 5)
-                    rooms.RemoveAt(i);
-
-                //if(room.tiles.Count > mainRoom.tiles.Count)
-                //  mainRoom = room;
+                    rooms.RemoveAt(i);              
             }
-            Debug.WriteLine($"Flood filled rooms count: {rooms.Count}");
+            for(int i = 0; i < rooms.Count; i++)
+            {
+                if(mainRoom == null || rooms[i].tiles.Count > mainRoom.tiles.Count)
+                    mainRoom = rooms[i];
+            }
+            Debug.WriteLine($"Flood filled rooms count: {rooms.Count}, mapSize: {width}, {height}");
 
             //connect rooms
             if(rooms.Count > 1)
@@ -469,8 +468,47 @@ namespace LowRezRogue {
                 map[p.X, p.Y] = new Tile(false, type);
             }
 
+
+            //place entries
+            int numOfEntries = 1;
+            if(isOverworld)
+            {
+                numOfEntries = 5;
+            }
+
+            for(int l = 0; l < numOfEntries; l++)
+            {
+                Point entry = mainRoom.tiles[random.Next(0, mainRoom.tiles.Count)];
+
+                while(mainRoom.edgeTiles.Contains(entry) || newMap.entries.ContainsKey(entry) || !DistanceToEntriesBigEnough(entry))
+                {
+                    entry = mainRoom.tiles[random.Next(0, mainRoom.tiles.Count)];
+                }
+
+
+                if(!isOverworld)
+                {
+                    newMap.entries.Add(entry, game.allMaps[0]);
+                    if(map[entry.X + 1, entry.Y].walkable)
+                        newMap.playerPositionOnLeave = new Point(entry.X + 1, entry.Y);
+                    else if(map[entry.X - 1, entry.Y].walkable)
+                        newMap.playerPositionOnLeave = new Point(entry.X + 1, entry.Y);
+                    else if(map[entry.X, entry.Y + 1].walkable)
+                        newMap.playerPositionOnLeave = new Point(entry.X + 1, entry.Y);
+                    else if(map[entry.X, entry.Y - 1].walkable)
+                        newMap.playerPositionOnLeave = new Point(entry.X + 1, entry.Y);
+                    else
+                        newMap.playerPositionOnLeave = entry;
+                } else
+                {
+                    newMap.entries.Add(entry, game.allMaps[l + 1]);
+                }
+                map[entry.X, entry.Y] = new Tile(true, set.interaction[0]);
+
+            }
+
             //place enemies
-            game.enemies = new List<Enemy>();
+            newMap.enemies = new List<Enemy>();
             for(int r = 0; r < rooms.Count; r++)
             {
                 int numOfEnemies = rooms[r].tiles.Count / tilesPerEnemy;
@@ -484,10 +522,48 @@ namespace LowRezRogue {
                             p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
                         }
                     }
-                    game.enemies.Add(new Enemy(p, game.enemyAnimations));
+                    newMap.enemies.Add(new Enemy(p, game.enemyAnimations));
                 }
             }
-            Debug.WriteLine("Enemies created: " + game.enemies.Count);
+            Debug.WriteLine("Enemies created: " + newMap.enemies.Count);
+
+            //place castle
+            if(isOverworld)
+            {
+                Room room = rooms[random.Next(0,rooms.Count)];
+                while(room == smallest && rooms.Count > 1)
+                {
+                    room = rooms[random.Next(0, rooms.Count)];
+                }
+
+                Point p = room.tiles[random.Next(0, room.tiles.Count)];
+                while(room.edgeTiles.Contains(p) || newMap.entries.ContainsKey(p) || !DistanceToEntriesBigEnough(p))
+                {
+                    p = room.tiles[random.Next(0, room.tiles.Count)];
+                }
+
+                map[p.X, p.Y] = new Tile(true, set.interaction[2]);
+
+
+                for(int i = 1; i <= map[p.X, p.Y].tileType.xExtraTiles; i++)
+                {
+                    if(p.X + 1 >= width)
+                        continue;
+
+                    map[p.X + i, p.Y] = new Tile(map[p.X, p.Y].walkable, set.interaction[2]);
+
+                    var length = map[p.X, p.Y].tileType.spriteRect.Length;
+                    Rectangle[] spriteRect = new Rectangle[length];
+
+                    for(int k = 0; k < length; k++)
+                    {
+                        spriteRect[k] = map[p.X, p.Y].tileType.spriteRect[k];
+                        spriteRect[k].X += pixels;
+                    }
+                    map[p.X + i, p.Y].spriteRect = spriteRect;
+                }
+            }
+
 
             Room playerRoom = rooms[random.Next(0, rooms.Count)];
             while(playerRoom == smallest && rooms.Count > 1)
@@ -501,9 +577,41 @@ namespace LowRezRogue {
                 pos = playerRoom.tiles[random.Next(0, playerRoom.tiles.Count)];
             }
 
-            game.player = new Player(pos, game.playerAnimations);
+            if(isOverworld)
+                newMap.playerPositionOnLeave = pos;
+
+            newMap.rooms = rooms;
+            newMap.map = map;
+
+            return newMap;
+        }
+
+
+        static bool AreTilesNeighbours(Point p1, Point p2) {
+            return AreTilesNeighbours(p1.X, p1.Y, p2.X, p2.Y);
+        }
+
+        static bool AreTilesNeighbours(int x1, int y1, int x2, int y2) {
+            if(!IsInMapRange(x1, y1) || !IsInMapRange(x2, y2))
+                return false;
+
+            if((x1 == x2 + 1 || x1 == x2 - 1) && y1 == y2)
+                return true;
+            if((y1 == y2 + 1 || y1 == y2 - 1) && x1 == x2)
+                return true;
+
+            return false;
+        }
+
+        static bool DistanceToEntriesBigEnough(Point p) {
+
+            foreach(Point entry in workingOn.entries.Keys)
+            {
+                if(AreTilesNeighbours(entry, p))
+                    return false;
+            }
             
-            return map;
+            return true;
         }
 
         static void ConnectClosestRooms(bool forceMainRoomConnection = false) {

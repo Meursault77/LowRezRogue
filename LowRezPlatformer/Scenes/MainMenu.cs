@@ -101,7 +101,7 @@ namespace LowRezRogue {
         }
 
         public void UnloadContent() {
-
+            mainAtlas.Dispose();
         }
 
         double animationBackgroundTimer = 0;
@@ -124,7 +124,7 @@ namespace LowRezRogue {
             {
                 if(triggerPlayerSmash)
                 {
-                    player.TriggerAnimation("smash", () => { animationFrameTime = 0.166; player.TriggerAnimation("idle2"); LowRezRogue.gameScene = LowRezRogue.GameScene.game; });
+                    player.TriggerAnimation("smash", () => { animationFrameTime = 0.166; player.TriggerAnimation("idle2"); LowRezRogue.gameScene = LowRezRogue.GameScene.game; this.UnloadContent(); });
                     triggerPlayerSmash = false;
                 }
                 if(moveBackground)
