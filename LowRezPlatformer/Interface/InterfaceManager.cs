@@ -212,7 +212,7 @@ namespace LowRezRogue.Interface {
 
         static void InitNumberSpriteRects() {
             numberSprites = new Dictionary<int, Rectangle>();
-            numberSprites.Add(0, new Rectangle(80, 10, 10, 10));
+            numberSprites.Add(0, new Rectangle(0, 0, 10, 10));
             numberSprites.Add(1, new Rectangle(10, 0, 10, 10));
             numberSprites.Add(2, new Rectangle(20, 0, 10, 10));
             numberSprites.Add(3, new Rectangle(30, 0, 10, 10));
@@ -405,6 +405,10 @@ namespace LowRezRogue.Interface {
                 Debug.WriteLine($"Damage, Have no sprite for this number {rangeDamage}");
                 statsRangeNum.spriteRect = numberSprites[0];
             }
+        }
+
+        public static void ShowArtifact(int piecesFound) {
+            Debug.WriteLine("Called ShowAritfact in InterfaceManager");
         }
 
     }

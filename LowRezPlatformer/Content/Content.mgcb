@@ -82,3 +82,9 @@
 /processorParam:TextureFormat=Color
 /build:Menus.png
 
+#begin XML/Items.xml
+/copy:XML/Items.xml
+
+#begin XML/Enemies.xml
+/copy:XML/Enemies.xml
+

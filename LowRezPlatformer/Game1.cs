@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using static LowRezRogue.MapGeneration;
 using LowRezRogue.Interface;
+using System.Globalization;
 
 namespace LowRezRogue {
 
@@ -17,6 +18,7 @@ namespace LowRezRogue {
         public Dictionary<string, Animation> animations;
         public Animation currentAnim;
 
+        public int maxHealth;
         public int health;
         public int armor;
         public int damage;
@@ -38,16 +40,21 @@ namespace LowRezRogue {
         
         public bool noDamage;
 
-        public Player(Point position, Dictionary<string, Animation> anims) {
+        Action onDeath;
+        Action onArtifactFound;
+
+        public Player(Point position, Dictionary<string, Animation> anims, Action onDeath, Action onArtifactFound) {
             this.position = position;
 
             spriteRect = new Rectangle(0, 0, 8, 8);
 
-            health = 9;
-            damage = 4;
-            rangeDamage = 3;
-            armor = 5;
-            visionRange = 3;
+            maxHealth = 10;
+            health = 10;
+            damage = 2;
+            armor = 1;
+            rangeDamage = 0;            
+            visionRange = 0;
+
             animations = anims;
             currentAnim = animations["idle"];
             noDamage = false;
@@ -65,6 +72,8 @@ namespace LowRezRogue {
             itemWeapon = null;
             itemRangeWeapon = null;
             itemArmor = null;
+            this.onDeath = onDeath;
+            this.onArtifactFound = onArtifactFound;
 
             UpdateAnimation();
             InterfaceManager.UpdateHealth(health);
@@ -89,7 +98,8 @@ namespace LowRezRogue {
             health -= damage;
             if(health <= 0)
             {
-                //DIE!!!
+                //start die animation
+                onDeath();
                 return true;
                 
             } else
@@ -108,52 +118,104 @@ namespace LowRezRogue {
                 currentAnim.endOfAnimationAction = endAction;
             }
         }
-    }
 
-    public class Enemy {
+        public Item EquipItem(Item newItem) {
+            Debug.WriteLine($"equip new item {newItem.name}");
 
-        public Point position;
-
-        public int health = 6;
-        public int armor = 1;
-        public int damage = 3;
-        public int moveSpeed = 1;
-
-        public bool dead = false;
-
-        public Rectangle spriteRect;
-        public HashSet<Point> visibleTiles;
-        
-        public Animation currentAnim;
-        Dictionary<string, Animation> animations;
-
-        public Enemy(Point position, Dictionary<string, Animation> animations) {
-            this.position = position;
-
-            currentAnim = animations["idle"];
-            this.animations = animations;
-            UpdateAnimation();
-            spriteRect = new Rectangle(0, 16, 8, 8);
-        }
-
-        public void UpdateAnimation() {
-            spriteRect = currentAnim.GetNextFrame();
-            if(spriteRect == Rectangle.Empty)
+            Item oldItem = null;
+            switch(newItem.type)
             {
-                currentAnim = animations["idle"].StartAnimation();
-                spriteRect = currentAnim.GetNextFrame();
+                case ItemType.armor:
+                    {
+                        if(itemArmor != null)
+                        {
+                            oldItem = UnequipItem(ItemType.armor);
+                        }
+                        itemArmor = newItem;
+                        armor += newItem.armor;
+                        InterfaceManager.UpdateArmor(armor);
+                        break;
+                    }
+                case ItemType.weapon:
+                    {
+                        if(itemWeapon != null)
+                        {
+                            oldItem = UnequipItem(ItemType.weapon);
+                        }
+                        itemWeapon = newItem;
+                        damage += newItem.damage;
+                        InterfaceManager.UpdateDamage(damage);
+                        break;
+                    }
+                case ItemType.range:
+                    {
+                        if(itemRangeWeapon != null)
+                        {
+                            oldItem = UnequipItem(ItemType.range);
+                        }
+                        itemRangeWeapon = newItem;
+                        rangeDamage += newItem.rangeDamage;
+                        visionRange = newItem.range;
+                        InterfaceManager.UpdateRangeDamage(rangeDamage);
+                        break;
+                    }
+                case ItemType.potion:
+                    {
+                        //nothing
+                        health += newItem.health;
+                        if(health > maxHealth)
+                            health = maxHealth;
+
+                        InterfaceManager.UpdateHealth(health);
+                        break;
+                    }
+                case ItemType.artifact:
+                    {
+                        onArtifactFound();
+                        break;
+                    }
             }
+            return oldItem;
+
         }
 
-        public void TriggerAnimation(string name, Action endAction = null) {
-            if(animations.ContainsKey(name))
+        Item UnequipItem(ItemType type) {
+            Item oldItem = null;
+            switch(type)
             {
-                currentAnim = animations[name].StartAnimation();
-                currentAnim.endOfAnimationAction = endAction;
+                case ItemType.armor:
+                    {
+                        armor -= itemArmor.armor;
+                        oldItem = itemArmor;
+                        itemArmor = null;
+                        break;
+                    }
+                case ItemType.weapon:
+                    {
+                        oldItem = itemWeapon;
+                        damage -= itemWeapon.damage;
+                        itemWeapon = null;
+                        break;
+                    }
+                case ItemType.range:
+                    {
+                        oldItem = itemRangeWeapon;
+                        rangeDamage -= itemRangeWeapon.rangeDamage;
+                        visionRange = 0;
+                        itemRangeWeapon = null;
+                        break;
+                    }
+                case ItemType.potion:
+                    {
+                        //nothing
+                        break;
+                    }
             }
-        }
-    }
+            return oldItem;
+        }     
 
+    }
+ 
     public class Animation {
         public string name;
         int currentFrame;
@@ -198,10 +260,33 @@ namespace LowRezRogue {
         }
     }
 
+    public enum ItemType { armor, weapon, range, potion, artifact}
+
     public class Item {
 
-    }
+        public string name;
+        public ItemType type;
 
+        public int health;
+        public int armor;
+        public int damage;
+        public int rangeDamage;
+        public int range;
+
+        public Rectangle spriteRect;
+
+        public Item(string name, ItemType type, int health, int armor, int damage, int rangeDamage, int range, Rectangle spriteRect) {
+            this.name = name;
+            this.type = type;
+            this.health = health;
+            this.armor = armor;
+            this.damage = damage;
+            this.rangeDamage = rangeDamage;
+            this.range = range;
+            this.spriteRect = spriteRect;
+        }
+
+    }
 
     public class Map {
 
@@ -225,6 +310,90 @@ namespace LowRezRogue {
         }
     }
 
+    public class Enemy {
+
+        public Point position;
+
+        public int health = 6;
+        public int armor = 1;
+        public int damage = 3;
+        public int moveSpeed = 1;
+
+        public bool dead = false;
+
+        public Rectangle spriteRect;
+        public HashSet<Point> visibleTiles;
+
+        public Animation currentAnim;
+        Dictionary<string, Animation> animations;
+
+        public Enemy(Point position, EnemyType type) {
+
+        }
+
+        public Enemy(Point position, Dictionary<string, Animation> animations) {
+            this.position = position;
+
+            currentAnim = animations["idle"].StartAnimation();
+            this.animations = animations;
+            spriteRect = new Rectangle(0, 16, 8, 8);
+        }
+
+        public void UpdateAnimation() {
+            spriteRect = currentAnim.GetNextFrame();
+            if(spriteRect == Rectangle.Empty)
+            {
+                currentAnim = animations["idle"].StartAnimation();
+                spriteRect = currentAnim.GetNextFrame();
+            }
+        }
+
+        public void TriggerAnimation(string name, Action endAction = null) {
+            if(animations.ContainsKey(name))
+            {
+                currentAnim = animations[name].StartAnimation();
+                currentAnim.endOfAnimationAction = endAction;
+            }
+        }
+    }
+
+    
+
+    public class EnemyType {
+        public string name;
+        public int turnsPerMove;
+        public bool rangeAttacks;
+        public int moveDistance;
+
+        public int index;
+
+        public int damage;
+        public int range;
+        public int health;
+        public int armor;
+
+        Dictionary<string, Animation> animations;
+
+        float odds;
+
+        public EnemyType(string name, int index, int turnsPerMove, int moveDistance, bool attacksOnRange, int damage, int range, 
+            int health, int armor, float odds, Dictionary<string, Animation> anim) 
+            {
+            this.name = name;
+            this.rangeAttacks = attacksOnRange;
+            this.turnsPerMove = turnsPerMove;
+            this.moveDistance = moveDistance;
+
+            this.damage = damage;
+            this.range = range;
+            this.health = health;
+            this.armor = armor;
+
+            this.animations = anim;
+
+            this.odds = odds;
+        }
+    }
 
 
     public class LowRezRogue : Game {
@@ -240,19 +409,21 @@ namespace LowRezRogue {
         public enum GameState { playerMove, aiTurn, playerRangeCombat, sprint, animation }
         GameState gameState = GameState.playerMove;
 
+        enum MoveDirection { None, Up, Right, Down, Left }
+
         int sprintCounter = 0;
 
         public Player player;
         //public List<Enemy> enemies;
-
-
+        
         // [0] -> overworld, [1] - [5] -> dungeons
         public Map[] allMaps;
         Map currentMap;
 
-        int mapPixels = 8;
-       // int mapWidth = 64;
-       // int mapHeight = 64;
+        Dictionary<string, Item> items;
+        EnemyType[] enemyTypes;
+
+        int pixels = 8;
 
         Random random;
 
@@ -260,18 +431,22 @@ namespace LowRezRogue {
         Texture2D playerAtlas;
         Texture2D menuAtlas;
 
+        int artifactPiecesFound;
+        int maxArtifactPieces = 5;
+
         public Dictionary<string, Animation> playerAnimations;
         public Dictionary<string, Animation> enemyAnimations;
 
         MainMenu mainMenu;
+        DeathScene deathScene;
+        PauseMenu pauseMenu;
 
         public LowRezRogue() {
             graphics = new GraphicsDeviceManager(this);
            
             Content.RootDirectory = "Content";
-        }
-
-        
+        }  
+       
         protected override void Initialize() {
 
             graphics.PreferredBackBufferHeight = 512;
@@ -285,6 +460,8 @@ namespace LowRezRogue {
 
             InterfaceManager.Initialize(Content);
             LoadAnimationData();
+            LoadItems();
+            LoadEnemies();
 
             MapGeneration.InitTileSets();
             GenerateMaps();
@@ -293,6 +470,12 @@ namespace LowRezRogue {
 
             mainMenu = new MainMenu();
             mainMenu.Initialize(Content);
+            deathScene = new DeathScene(Exit, StartNewGame);
+            deathScene.Initialize();
+            pauseMenu = new PauseMenu(Exit, StartNewGame, () => { gameScene = GameScene.game; gameState = GameState.playerMove; });
+            pauseMenu.Initialize();
+
+            artifactPiecesFound = 0;
 
             FadeScreen.Inititalize();
 
@@ -306,25 +489,14 @@ namespace LowRezRogue {
             Random random = new Random();
 
             allMaps = new Map[6];
-            allMaps[0] = CreateDungeon(this, 64, 64, 33, isOverworld: true);
+            allMaps[0] = CreateDungeon(this, 64, 64, 33, items, isOverworld: true);
 
-            allMaps[1] = CreateDungeon(this, 48, 48, 35);
-            allMaps[2] = CreateDungeon(this, 32, 32, 36);
-            allMaps[3] = CreateDungeon(this, 64, 64, 38);
-            allMaps[4] = CreateDungeon(this, 48, 48, 40);
-            allMaps[5] = CreateDungeon(this, 64, 64, 40);
+            allMaps[1] = CreateDungeon(this, 48, 48, 35, items);
+            allMaps[2] = CreateDungeon(this, 32, 32, 36, items);
+            allMaps[3] = CreateDungeon(this, 64, 64, 38, items);
+            allMaps[4] = CreateDungeon(this, 48, 48, 40, items);
+            allMaps[5] = CreateDungeon(this, 64, 64, 40, items);
             currentMap = allMaps[0];
-
-
-
-            //create connections
-            /*for(int i = 1; i <= 5; i++)
-            {
-                foreach(Point key in allMaps[i].entries.Keys)
-                {
-                    allMaps[i].entries[key] = allMaps[0];
-                }
-            }*/
 
             int j = 1;
             HashSet<Point> entries = new HashSet<Point>();
@@ -339,8 +511,7 @@ namespace LowRezRogue {
             }
 
 
-            player = new Player(currentMap.playerPositionOnLeave, playerAnimations);
-            //player.position = new Point(24, 24);
+            player = new Player(currentMap.playerPositionOnLeave, playerAnimations, PlayerDeath, OnArtifactFound);
         }
 
         void LoadAnimationData() {
@@ -362,7 +533,7 @@ namespace LowRezRogue {
                 {
                     int x = int.Parse(frames[i].Attributes["x"].Value);
                     int y = int.Parse(frames[i].Attributes["y"].Value);
-                    newAnim.rects[i] = new Rectangle(x * mapPixels, y * mapPixels, mapPixels, mapPixels);
+                    newAnim.rects[i] = new Rectangle(x * pixels, y * pixels, pixels, pixels);
                 }
                 playerAnimations.Add(name, newAnim);
             }
@@ -382,10 +553,71 @@ namespace LowRezRogue {
                 {
                     int x = int.Parse(frames[i].Attributes["x"].Value);
                     int y = int.Parse(frames[i].Attributes["y"].Value);
-                    newAnim.rects[i] = new Rectangle(x * mapPixels, y * mapPixels, mapPixels, mapPixels);
+                    newAnim.rects[i] = new Rectangle(x * pixels, y * pixels, pixels, pixels);
                 }
                 enemyAnimations.Add(name, newAnim);
             }
+        }
+
+
+        //TODO: Load Animations per enemyType
+        //maybe place the animations per enemy type over each other 
+        //and add 8 pixels to Y per enemyType index. this way i dont 
+        //have to change the animation system...well i have to change it..
+
+        void LoadEnemies() {
+            XmlDocument enemyXml = new XmlDocument();
+            enemyXml.Load("Content/XML/Enemies.xml");
+
+            XmlNodeList enemyNodes = enemyXml.SelectNodes("enemyTypes/enemy");
+
+            enemyTypes = new EnemyType[enemyNodes.Count];
+            for(int i = 0; i < enemyNodes.Count; i++)
+            {
+                XmlNode node = enemyNodes[i];
+
+                int turnsPerMove = int.Parse(node.Attributes["turnsPerMove"].Value);
+                int moveDist = int.Parse(node.Attributes["moveDistance"].Value);
+                int health = int.Parse(node.Attributes["health"].Value);
+                int armor = int.Parse(node.Attributes["armor"].Value);
+                int damage = int.Parse(node.Attributes["damage"].Value);
+                int range = int.Parse(node.Attributes["range"].Value);
+
+                bool rangeAttacks = bool.Parse(node.Attributes["rangeAttacks"].Value);
+
+                float odds = float.Parse(node.Attributes["odds"].Value, CultureInfo.InvariantCulture);
+
+                enemyTypes[i] = new EnemyType(enemyNodes[i].Attributes["name"].Value, i, turnsPerMove, moveDist, rangeAttacks, damage, range, health, armor, odds, enemyAnimations);
+            }  
+        }
+
+        void LoadItems() {
+            
+            XmlDocument itemsXml = new XmlDocument();
+            itemsXml.Load("Content/XML/Items.xml");
+
+            XmlNodeList itemNodes = itemsXml.SelectNodes("items/item");
+
+            items = new Dictionary<string, Item>();
+
+            for(int i = 0; i < itemNodes.Count; i++)
+            {
+                XmlNode node = itemNodes[i];
+                string name = node.Attributes["name"].Value;
+                int health = int.Parse(node.Attributes["health"].Value);
+                int armor = int.Parse(node.Attributes["armor"].Value);
+                int damage = int.Parse(node.Attributes["damage"].Value);
+                int rangeDamage = int.Parse(node.Attributes["rangeDamage"].Value);
+                int range = int.Parse(node.Attributes["range"].Value);
+
+                ItemType type = (ItemType)Enum.Parse(typeof(ItemType), node.Attributes["type"].Value);
+
+                int x = int.Parse(node.Attributes["x"].Value);
+                int y = int.Parse(node.Attributes["y"].Value);
+
+                items.Add(name, new Item(name, type, health, armor, damage, rangeDamage, range, new Rectangle(x * pixels, y * pixels, pixels, pixels)));
+            }
+
         }
 
         protected override void LoadContent() {
@@ -421,8 +653,8 @@ namespace LowRezRogue {
         KeyboardState keyboardState;
 
         protected override void Update(GameTime gameTime) {
-            if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+            //if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            //    Exit();
 
             double deltaTime = gameTime.ElapsedGameTime.TotalSeconds;
             elapsedTime += deltaTime;
@@ -469,6 +701,15 @@ namespace LowRezRogue {
                         InterfaceManager.ToggleSprint();
                     }
                 }
+
+
+                if((keyboardState.IsKeyDown(Keys.Escape) && lastKeyboardState.IsKeyUp(Keys.Escape))
+                    || (keyboardState.IsKeyDown(Keys.F10) && lastKeyboardState.IsKeyUp(Keys.F10)))
+                {
+                    gameScene = GameScene.pause;
+                    return;
+                }
+
 
                 if(uiTickTimer >= 0.0333)
                 {
@@ -549,10 +790,10 @@ namespace LowRezRogue {
                 mainMenu.Update(deltaTime, keyboardState, lastKeyboardState);
             } else if(gameScene == GameScene.pause)
             {
-
+                pauseMenu.Update(deltaTime, keyboardState, lastKeyboardState);
             } else if(gameScene == GameScene.death)
             {
-
+                deathScene.Update(deltaTime, keyboardState, lastKeyboardState);
             } else if(gameScene == GameScene.game && gameState == GameState.animation)
             {
 
@@ -798,7 +1039,10 @@ namespace LowRezRogue {
 
             if(currentMap.map[player.position.X, player.position.Y].itemOnTop != null)
             {
-
+                Item itemToPlace = player.EquipItem(currentMap.map[player.position.X, player.position.Y].itemOnTop);
+                currentMap.map[player.position.X, player.position.Y].itemOnTop = null;
+                if(itemToPlace != null)
+                    PlaceItemOnMap(itemToPlace, positionCache);
             }
 
             switch(currentMap.map[player.position.X, player.position.Y].tileType.interaction)
@@ -840,43 +1084,7 @@ namespace LowRezRogue {
             }
 
         }
-
-        void TransitionToMap(Map transitionTo, Point positionCache) {
-            gameState = GameState.animation;
-            Debug.WriteLine(gameState);
-            FadeScreen.StartFadeScreen(0.3, 
-                () => { currentMap.playerPositionOnLeave = positionCache;
-                currentMap = transitionTo;
-                player.position = transitionTo.playerPositionOnLeave;
-                camera.JumpToPosition(player.position);
-            }, () => { gameState = GameState.playerMove; });
-        }
-
-        void EndTurn() {
-            Debug.WriteLine("End Player Turn");
-
-            if(player.sprintOnCoolDown)
-            {
-                sprintCounter += 1;
-                if(sprintCounter == player.sprintCoolDown)
-                {
-                    InterfaceManager.ActivateSprint(true);
-                    player.sprintOnCoolDown = false;
-                }
-            }
-
-            if(gameState == GameState.sprint)
-            {
-                player.sprintOnCoolDown = true;
-                sprintCounter = 0;
-                InterfaceManager.ToggleSprint();
-                InterfaceManager.ActivateSprint(false);
-            }
-            gameState = GameState.aiTurn;
-        }
        
-        enum MoveDirection { None, Up, Right, Down, Left }
-
         void ProcessEnemyAI() {
             Debug.WriteLine("Processing enemy AI");
             
@@ -909,7 +1117,6 @@ namespace LowRezRogue {
                                 enem.TriggerAnimation("attack");
                                 if(player.TakeDamage(damage))
                                 {           //returns true, if player dies!
-                                    gameScene = GameScene.death;
                                     return;
                                 }
                                 enem.position = player.position;
@@ -985,13 +1192,75 @@ namespace LowRezRogue {
             EndAiTurn();
         }
 
+        #region small stuff
+
+        void OnArtifactFound() {
+            artifactPiecesFound += 1;
+            if(artifactPiecesFound > maxArtifactPieces) {
+                Debug.WriteLine("Too many artifact pieces spawned...");
+            }
+            InterfaceManager.ShowArtifact(artifactPiecesFound);
+        }
+
+        void TransitionToMap(Map transitionTo, Point positionCache) {
+            gameState = GameState.animation;
+            Debug.WriteLine(gameState);
+            FadeScreen.StartFadeScreen(0.3,
+                () => {
+                    currentMap.playerPositionOnLeave = positionCache;
+                    currentMap = transitionTo;
+                    player.position = transitionTo.playerPositionOnLeave;
+                    camera.JumpToPosition(player.position);
+                }, () => { gameState = GameState.playerMove; });
+        }
+
+        void EndTurn() {
+            Debug.WriteLine("End Player Turn");
+
+            if(player.sprintOnCoolDown)
+            {
+                sprintCounter += 1;
+                if(sprintCounter == player.sprintCoolDown)
+                {
+                    InterfaceManager.ActivateSprint(true);
+                    player.sprintOnCoolDown = false;
+                }
+            }
+
+            if(gameState == GameState.sprint)
+            {
+                player.sprintOnCoolDown = true;
+                sprintCounter = 0;
+                InterfaceManager.ToggleSprint();
+                InterfaceManager.ActivateSprint(false);
+            }
+            gameState = GameState.aiTurn;
+        }
+
         void EndAiTurn() {
             Debug.WriteLine("End AI Turn");
-            
+
             gameState = GameState.playerMove;
         }
 
-        #region small stuff
+        void StartNewGame() {
+            Debug.WriteLine("Start new Game");
+            Initialize();
+            gameState = GameState.playerMove;
+            gameScene = GameScene.game;
+        }
+
+        void PlayerDeath() {
+            gameState = GameState.animation;
+            FadeScreen.StartFadeScreen(0.3,() => {
+                gameScene = GameScene.death;
+                
+            });
+        }
+
+        public void PlaceItemOnMap(Item item, Point pos) {
+            currentMap.map[pos.X, pos.Y].itemOnTop = item;
+        }
         
         bool EnemMoveTo(Enemy enem, int x, int y) {
             if(IsInMapRange(x, y) && IsTileFree(x, y))
@@ -1001,7 +1270,6 @@ namespace LowRezRogue {
             } else
                 return false;
         }
-
 
         bool IsInMapRange(int x, int y) {
             return x >= 0 && x < currentMap.mapWidth && y >= 0 && y < currentMap.mapHeight;
@@ -1014,7 +1282,6 @@ namespace LowRezRogue {
         bool IsTileFree(int x, int y) {
             return IsTileFree(new Point(x, y));
         }
-
 
         bool IsTileFree(Point p) {
             if(!IsInMapRange(p))
@@ -1030,7 +1297,6 @@ namespace LowRezRogue {
                     return false;
             }
             return true;
-
         }
 
         bool AreTilesNeighbours(Point p1, Point p2) {
@@ -1049,8 +1315,6 @@ namespace LowRezRogue {
             return false;
         }
 
-
-
         #endregion
 
         protected override void Draw(GameTime gameTime) {
@@ -1065,12 +1329,13 @@ namespace LowRezRogue {
             } 
             else if(gameScene == GameScene.pause)
             {
-
+                spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
+                pauseMenu.Render(spriteBatch, menuAtlas);
             }
             else if(gameScene == GameScene.death)
             {
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
-                spriteBatch.Draw(tileAtlas, new Rectangle(0, 0, 64, 64), Color.Red);
+                deathScene.Render(spriteBatch, menuAtlas);
             } 
             else if(gameScene == GameScene.game)
             {
@@ -1081,8 +1346,11 @@ namespace LowRezRogue {
                 {
                     for(int y = 0; y < currentMap.mapHeight; y++)
                     {
-                        spriteBatch.Draw(tileAtlas, new Rectangle(x * mapPixels, y * mapPixels, mapPixels, mapPixels), currentMap.map[x, y].spriteRect[currentMap.map[x,y].spriteIndex], Color.White);
-
+                        spriteBatch.Draw(tileAtlas, new Rectangle(x * pixels, y * pixels, pixels, pixels), currentMap.map[x, y].spriteRect[currentMap.map[x,y].spriteIndex], Color.White);
+                        if(currentMap.map[x,y].itemOnTop != null)
+                        {
+                            spriteBatch.Draw(tileAtlas, new Rectangle(x * pixels, y * pixels, pixels, pixels), currentMap.map[x, y].itemOnTop.spriteRect, Color.White);
+                        }
                     }
                 }
 
@@ -1090,20 +1358,20 @@ namespace LowRezRogue {
                 {
                     foreach(Point p in player.rangeCombatTiles)
                     {
-                        spriteBatch.Draw(tileAtlas, new Rectangle(p.X * mapPixels, p.Y * mapPixels, mapPixels, mapPixels), new Rectangle(0 * mapPixels, 8 * mapPixels, 8, 8), Color.White);
+                        spriteBatch.Draw(tileAtlas, new Rectangle(p.X * pixels, p.Y * pixels, pixels, pixels), new Rectangle(0 * pixels, 8 * pixels, 8, 8), Color.White);
                     }
                     if(player.targetedEnemy != null)
                     {
-                        spriteBatch.Draw(tileAtlas, new Rectangle((player.targetedEnemy.position.X * mapPixels) - 1, (player.targetedEnemy.position.Y * mapPixels) - 1, 10, 10), new Rectangle(1 * mapPixels, 8 * mapPixels, 10,10), Color.White);
+                        spriteBatch.Draw(tileAtlas, new Rectangle((player.targetedEnemy.position.X * pixels) - 1, (player.targetedEnemy.position.Y * pixels) - 1, 10, 10), new Rectangle(1 * pixels, 8 * pixels, 10,10), Color.White);
                     }
                 }
                
                 for(int i = 0; i < currentMap.enemies.Count; i++)
                 {
-                    spriteBatch.Draw(playerAtlas, new Rectangle(currentMap.enemies[i].position * new Point(mapPixels, mapPixels), new Point(mapPixels, mapPixels)), currentMap.enemies[i].spriteRect, Color.White);
+                    spriteBatch.Draw(playerAtlas, new Rectangle(currentMap.enemies[i].position * new Point(pixels, pixels), new Point(pixels, pixels)), currentMap.enemies[i].spriteRect, Color.White);
                 }
 
-                spriteBatch.Draw(playerAtlas, new Rectangle(player.position * new Point(mapPixels, mapPixels), new Point(mapPixels, mapPixels)), player.spriteRect, Color.White);
+                spriteBatch.Draw(playerAtlas, new Rectangle(player.position * new Point(pixels, pixels), new Point(pixels, pixels)), player.spriteRect, Color.White);
                 spriteBatch.End();
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
                 InterfaceManager.Render(spriteBatch);

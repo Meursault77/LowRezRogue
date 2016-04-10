@@ -351,7 +351,7 @@ namespace LowRezRogue {
         static int tilesPerEnemy = 50;
 
 
-        public static Map CreateDungeon(LowRezRogue game, int width, int height, int blockingTilePercentage, bool openCave = false, bool isOverworld = false) {
+        public static Map CreateDungeon(LowRezRogue game, int width, int height, int blockingTilePercentage, Dictionary<string, Item> items, bool openCave = false, bool isOverworld = false) {
             MapGeneration.mapWidth = width;
             MapGeneration.mapHeight = height;
             set = GetTileSet(TileSets.overworld);
@@ -458,7 +458,7 @@ namespace LowRezRogue {
             if(smallest != null)
             {
                 Point p = smallest.tiles[random.Next(0, smallest.tiles.Count)];
-                if(smallest.tiles.Count > 7) {
+                if(smallest.tiles.Count > 10) {
                     while(smallest.edgeTiles.Contains(p))
                     {
                         p = smallest.tiles[random.Next(0, smallest.tiles.Count)];
@@ -578,8 +578,16 @@ namespace LowRezRogue {
             }
 
             if(isOverworld)
+            {
                 newMap.playerPositionOnLeave = pos;
+                //for testing
+                map[pos.X + 1, pos.Y].itemOnTop = items["oldSword"];
+                map[pos.X + 2, pos.Y].itemOnTop = items["fancySword"];
+                map[pos.X, pos.Y-1].itemOnTop = items["okayArmor"];
+                map[pos.X, pos.Y+1].itemOnTop = items["okayPotion"];
+                map[pos.X-1, pos.Y].itemOnTop = items["fancyRange"];
 
+            }
             newMap.rooms = rooms;
             newMap.map = map;
 

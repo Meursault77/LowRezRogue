@@ -157,6 +157,12 @@ namespace LowRezRogue {
             animationFrameTimer += deltaTime;
             animationBackgroundTimer += deltaTime;
 
+            if(keyboardState.IsKeyDown(Keys.Enter) && lastKeyboardState.IsKeyUp(Keys.Enter))
+            {
+                FadeScreen.StartFadeScreen(0.5,
+                        () => { LowRezRogue.gameScene = LowRezRogue.GameScene.game; this.UnloadContent(); }, null);
+            }
+
             if(pressA.active && keyboardState.IsKeyDown(Keys.A) && lastKeyboardState.IsKeyUp(Keys.A))
             {
 

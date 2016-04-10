@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+e<?xml version="1.0" encoding="utf-8"?>
 <animations>
   <playerAnimations>
     <anim name="idle" looping="True">
@@ -19,24 +19,23 @@
       <frame x="1" y="1"/>
       <frame x="2" y="1"/>
       <frame x="3" y="1"/>
-      <frame x="4" y="1"/>
-      <frame x="5" y="1"/>
     </anim>
   </playerAnimations>
   <enemyAnimations>
     <anim name="idle" looping="True">
-      <frame x="0" y="2"/>
-      <frame x="1" y="2"/>
+      <frame x="0" y="5"/>
+      <frame x="1" y="5"/>
+      <frame x="2" y="5"/>
     </anim>
     <anim name="attack" looping="False">
-      <frame x="2" y="2"/>
-      <frame x="3" y="2"/>
+      <frame x="3" y="5"/>
+      <frame x="3" y="5"/>
     </anim>
     <anim name="die" looping="False">
-      <frame x="3" y="3"/>
-      <frame x="4" y="3"/>
-      <frame x="5" y="3"/>
-      <frame x="6" y="3"/>
+      <frame x="4" y="5"/>
+      <frame x="5" y="5"/>
+      <frame x="6" y="5"/>
+      <frame x="7" y="5"/>
     </anim>
   </enemyAnimations>
   <mainMenu pixel="16">
