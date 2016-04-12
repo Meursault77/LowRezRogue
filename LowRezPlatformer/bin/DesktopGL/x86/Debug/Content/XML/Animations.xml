@@ -9,6 +9,11 @@
       <frame x="4" y="0"/>
       <frame x="5" y="0"/>
     </anim>
+    <anim name="sprint" looping="False">
+      <frame x="4" y="1"/>
+      <frame x="4" y="1"/>
+      <frame x="4" y="1"/>
+    </anim>
     <anim name="idleRange" looping="True">
       <frame x="0" y="1"/>
     </anim>
@@ -19,25 +24,70 @@
       <frame x="1" y="1"/>
       <frame x="2" y="1"/>
       <frame x="3" y="1"/>
-      <frame x="4" y="1"/>
-      <frame x="5" y="1"/>
     </anim>
   </playerAnimations>
   <enemyAnimations>
-    <anim name="idle" looping="True">
-      <frame x="0" y="2"/>
-      <frame x="1" y="2"/>
+    <anim name="idle0" looping="True">
+      <frame x="0" y="5"/>
+      <frame x="1" y="5"/>
+      <frame x="2" y="5"/>
     </anim>
-    <anim name="attack" looping="False">
-      <frame x="2" y="2"/>
-      <frame x="3" y="2"/>
+    <anim name="idle1" looping="True">
+      <frame x="0" y="6"/>
+      <frame x="1" y="6"/>
+      <frame x="2" y="6"/>
     </anim>
-    <anim name="die" looping="False">
-      <frame x="3" y="3"/>
-      <frame x="4" y="3"/>
-      <frame x="5" y="3"/>
-      <frame x="6" y="3"/>
+    <anim name="idle2" looping="True">
+      <frame x="0" y="7"/>
+      <frame x="1" y="7"/>
+      <frame x="2" y="7"/>
     </anim>
+    <anim name="idle3" looping="True">
+      <frame x="0" y="8"/>
+      <frame x="1" y="8"/>
+      <frame x="2" y="8"/>
+    </anim>
+    <anim name="attack0" looping="False">
+      <frame x="3" y="5"/>
+      <frame x="3" y="5"/>
+    </anim>
+    <anim name="attack1" looping="False">
+      <frame x="3" y="6"/>
+      <frame x="3" y="6"/>
+    </anim>
+    <anim name="attack2" looping="False">
+      <frame x="3" y="7"/>
+      <frame x="3" y="7"/>
+    </anim>
+    <anim name="attack3" looping="False">
+      <frame x="3" y="8"/>
+      <frame x="3" y="8"/>
+    </anim>
+    <anim name="die0" looping="False">
+      <frame x="4" y="5"/>
+      <frame x="5" y="5"/>
+      <frame x="6" y="5"/>
+      <frame x="7" y="5"/>
+    </anim>
+    <anim name="die1" looping="False">
+      <frame x="4" y="6"/>
+      <frame x="5" y="6"/>
+      <frame x="6" y="6"/>
+      <frame x="7" y="6"/>
+    </anim>
+    <anim name="die2" looping="False">
+      <frame x="4" y="7"/>
+      <frame x="5" y="7"/>
+      <frame x="6" y="7"/>
+      <frame x="7" y="7"/>
+    </anim>
+    <anim name="die3" looping="False">
+      <frame x="4" y="8"/>
+      <frame x="5" y="8"/>
+      <frame x="6" y="8"/>
+      <frame x="7" y="8"/>
+    </anim>
+    
   </enemyAnimations>
   <mainMenu pixel="16">
     <anim name="idle" looping="True">

@@ -351,10 +351,14 @@ namespace LowRezRogue {
         static int tilesPerEnemy = 50;
 
 
-        public static Map CreateDungeon(LowRezRogue game, int width, int height, int blockingTilePercentage, Dictionary<string, Item> items, bool openCave = false, bool isOverworld = false) {
+        public static Map CreateDungeon(LowRezRogue game, int width, int height, int blockingTilePercentage, Dictionary<string, Item> items, EnemyType[] enemyTypes,  bool openCave = false, bool isOverworld = false) {
             MapGeneration.mapWidth = width;
             MapGeneration.mapHeight = height;
-            set = GetTileSet(TileSets.overworld);
+
+            if(isOverworld)
+                set = GetTileSet(TileSets.overworld);
+            else
+                set = GetTileSet(TileSets.dungeon);
 
             Map newMap = new Map(width, height);
             workingOn = newMap;
@@ -463,9 +467,8 @@ namespace LowRezRogue {
                     {
                         p = smallest.tiles[random.Next(0, smallest.tiles.Count)];
                     }
-                }
-                var type = set.interaction[1];
-                map[p.X, p.Y] = new Tile(false, type);
+                }               
+                map[p.X, p.Y].itemOnTop = items["artifact"];
             }
 
 
@@ -522,7 +525,22 @@ namespace LowRezRogue {
                             p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
                         }
                     }
-                    newMap.enemies.Add(new Enemy(p, game.enemyAnimations));
+
+                    float rand = (float)random.Next(0, 101)/100.0f;
+                    int index = 0;
+                    for(int i = 0; i < enemyTypes.Length; i++)
+                    {
+                        if(enemyTypes[i].odds >= rand)
+                        {
+                            index = i;
+                            break;
+                        } else
+                        {
+                            rand -= enemyTypes[i].odds;
+                        }
+                    }
+
+                    newMap.enemies.Add(new Enemy(enemyTypes[index], p, game.enemyAnimations));
                 }
             }
             Debug.WriteLine("Enemies created: " + newMap.enemies.Count);

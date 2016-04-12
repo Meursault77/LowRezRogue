@@ -129,15 +129,16 @@ namespace LowRezRogue {
                 string name = node.Attributes["name"].Value;
 
                 XmlNodeList frames = node.SelectNodes("frame");
-                var newAnim = new Animation(name, looping, frames.Count);
-                newAnim.rects = new Rectangle[frames.Count];
+
+                var rects = new Rectangle[frames.Count];
 
                 for(int i = 0; i < frames.Count; i++)
                 {
                     int x = int.Parse(frames[i].Attributes["x"].Value);
                     int y = int.Parse(frames[i].Attributes["y"].Value);
-                    newAnim.rects[i] = new Rectangle(x * pixel, y * pixel, pixel, pixel);
+                    rects[i] = new Rectangle(x * pixel, y * pixel, pixel, pixel);
                 }
+                var newAnim = new Animation(name, looping, frames.Count, rects);
                 playerAnimations.Add(name, newAnim);
             }
         }

@@ -319,15 +319,16 @@ namespace LowRezRogue.Interface {
 
         }
 
-        public static void ToggleSprint(bool offScreen = false) {
- 
-            if(sprintLogo.transitionState != UiTransitionState.open)
-            {
-                sprintLogo.Open();
-            } else if(sprintLogo.transitionState != UiTransitionState.closed)
+        public static void CloseSprint() {
+            if(sprintLogo.transitionState != UiTransitionState.closed)
             {
                 sprintLogo.Close();
             }
+        }
+
+        public static void ShowSprint() {
+            if(sprintLogo.transitionState != UiTransitionState.open)
+                sprintLogo.Open();
         }
 
         public static void ActivateSprint(bool activate) {

@@ -111,7 +111,6 @@ namespace LowRezRogue {
         }
 
         public void TriggerAnimation(string name, Action endAction = null) {
-            Debug.WriteLine($"Player animation triggered: {name}, successful: {animations.ContainsKey(name)}, frames: {animations[name].rects.Length}");
             if(animations.ContainsKey(name))
             {
                 currentAnim = animations[name].StartAnimation();
@@ -216,7 +215,7 @@ namespace LowRezRogue {
 
     }
  
-    public class Animation {
+    public struct Animation {
         public string name;
         int currentFrame;
         int animationFrames;
@@ -225,11 +224,13 @@ namespace LowRezRogue {
 
         public Action endOfAnimationAction;
 
-        public Animation(string name, bool looping, int animationFrames) {
+        public Animation(string name, bool looping, int animationFrames, Rectangle[] rects) {
             this.name = name;
             this.looping = looping;
             this.animationFrames = animationFrames;
             currentFrame = 0;
+            this.rects = rects;
+            endOfAnimationAction = null;
         }
 
         public Animation StartAnimation() {
@@ -312,14 +313,21 @@ namespace LowRezRogue {
 
     public class Enemy {
 
+        EnemyType type;
         public Point position;
+        public string name;
+        public int health;
+        public int armor;
+        public int damage;
+        public int moveDistance;
+        public int range;
+        public bool rangeAttacks;
 
-        public int health = 6;
-        public int armor = 1;
-        public int damage = 3;
-        public int moveSpeed = 1;
+        public int turnsPerMove;
+        public int countTimer = 0;
 
         public bool dead = false;
+        public bool dying = false;
 
         public Rectangle spriteRect;
         public HashSet<Point> visibleTiles;
@@ -327,31 +335,40 @@ namespace LowRezRogue {
         public Animation currentAnim;
         Dictionary<string, Animation> animations;
 
-        public Enemy(Point position, EnemyType type) {
-
-        }
-
-        public Enemy(Point position, Dictionary<string, Animation> animations) {
+        
+        public Enemy(EnemyType type, Point position, Dictionary<string, Animation> animations) {
             this.position = position;
+            this.type = type;
+            health = type.health;
+            armor = type.armor;
+            damage = type.damage;
+            moveDistance = type.moveDistance;
+            range = type.range;
+            rangeAttacks = type.rangeAttacks;
+            turnsPerMove = type.turnsPerMove;
 
-            currentAnim = animations["idle"].StartAnimation();
+
+            currentAnim = animations[$"idle{type.index}"].StartAnimation();
             this.animations = animations;
             spriteRect = new Rectangle(0, 16, 8, 8);
         }
 
         public void UpdateAnimation() {
             spriteRect = currentAnim.GetNextFrame();
+            //spriteRect.Y += type.index * 8;
             if(spriteRect == Rectangle.Empty)
             {
-                currentAnim = animations["idle"].StartAnimation();
+                currentAnim = animations[$"idle{type.index}"].StartAnimation();
                 spriteRect = currentAnim.GetNextFrame();
             }
         }
 
-        public void TriggerAnimation(string name, Action endAction = null) {
-            if(animations.ContainsKey(name))
+        public void TriggerAnimation(string animName, Action endAction = null) {
+            Debug.WriteLine($"Triiger {animName}{type.index}");
+            if(animations.ContainsKey(animName + type.index))
             {
-                currentAnim = animations[name].StartAnimation();
+                currentAnim = animations[animName + type.index].StartAnimation();               
+                endAction += () => { Debug.WriteLine("end of animation is executed right now, enemy"); };
                 currentAnim.endOfAnimationAction = endAction;
             }
         }
@@ -374,7 +391,7 @@ namespace LowRezRogue {
 
         Dictionary<string, Animation> animations;
 
-        float odds;
+        public float odds;
 
         public EnemyType(string name, int index, int turnsPerMove, int moveDistance, bool attacksOnRange, int damage, int range, 
             int health, int armor, float odds, Dictionary<string, Animation> anim) 
@@ -392,6 +409,8 @@ namespace LowRezRogue {
             this.animations = anim;
 
             this.odds = odds;
+
+            this.index = index;
         }
     }
 
@@ -489,13 +508,13 @@ namespace LowRezRogue {
             Random random = new Random();
 
             allMaps = new Map[6];
-            allMaps[0] = CreateDungeon(this, 64, 64, 33, items, isOverworld: true);
+            allMaps[0] = CreateDungeon(this, 64, 64, 33, items, enemyTypes, isOverworld: true);
 
-            allMaps[1] = CreateDungeon(this, 48, 48, 35, items);
-            allMaps[2] = CreateDungeon(this, 32, 32, 36, items);
-            allMaps[3] = CreateDungeon(this, 64, 64, 38, items);
-            allMaps[4] = CreateDungeon(this, 48, 48, 40, items);
-            allMaps[5] = CreateDungeon(this, 64, 64, 40, items);
+            allMaps[1] = CreateDungeon(this, 48, 48, 35, items, enemyTypes);
+            allMaps[2] = CreateDungeon(this, 32, 32, 36, items, enemyTypes);
+            allMaps[3] = CreateDungeon(this, 64, 64, 38, items, enemyTypes);
+            allMaps[4] = CreateDungeon(this, 48, 48, 40, items, enemyTypes);
+            allMaps[5] = CreateDungeon(this, 64, 64, 40, items, enemyTypes);
             currentMap = allMaps[0];
 
             int j = 1;
@@ -526,15 +545,16 @@ namespace LowRezRogue {
                 string name = node.Attributes["name"].Value;
 
                 XmlNodeList frames = node.SelectNodes("frame");
-                var newAnim = new Animation(name, looping, frames.Count);
-                newAnim.rects = new Rectangle[frames.Count];
+                
+                var rects = new Rectangle[frames.Count];
 
                 for(int i = 0; i < frames.Count; i++)
                 {
                     int x = int.Parse(frames[i].Attributes["x"].Value);
                     int y = int.Parse(frames[i].Attributes["y"].Value);
-                    newAnim.rects[i] = new Rectangle(x * pixels, y * pixels, pixels, pixels);
+                    rects[i] = new Rectangle(x * pixels, y * pixels, pixels, pixels);
                 }
+                var newAnim = new Animation(name, looping, frames.Count, rects);
                 playerAnimations.Add(name, newAnim);
             }
 
@@ -546,15 +566,16 @@ namespace LowRezRogue {
                 string name = node.Attributes["name"].Value;
 
                 XmlNodeList frames = node.SelectNodes("frame");
-                var newAnim = new Animation(name, looping, frames.Count);
-                newAnim.rects = new Rectangle[frames.Count];
+                
+                var rects = new Rectangle[frames.Count];
 
                 for(int i = 0; i < frames.Count; i++)
                 {
                     int x = int.Parse(frames[i].Attributes["x"].Value);
                     int y = int.Parse(frames[i].Attributes["y"].Value);
-                    newAnim.rects[i] = new Rectangle(x * pixels, y * pixels, pixels, pixels);
+                    rects[i] = new Rectangle(x * pixels, y * pixels, pixels, pixels);
                 }
+                var newAnim = new Animation(name, looping, frames.Count, rects);
                 enemyAnimations.Add(name, newAnim);
             }
         }
@@ -568,10 +589,10 @@ namespace LowRezRogue {
         void LoadEnemies() {
             XmlDocument enemyXml = new XmlDocument();
             enemyXml.Load("Content/XML/Enemies.xml");
-
             XmlNodeList enemyNodes = enemyXml.SelectNodes("enemyTypes/enemy");
 
             enemyTypes = new EnemyType[enemyNodes.Count];
+
             for(int i = 0; i < enemyNodes.Count; i++)
             {
                 XmlNode node = enemyNodes[i];
@@ -670,7 +691,7 @@ namespace LowRezRogue {
                     if(gameState == GameState.sprint)
                     {
                         gameState = GameState.playerMove;
-                        InterfaceManager.ToggleSprint();
+                        InterfaceManager.CloseSprint();
                     }
 
                     if(gameState == GameState.playerMove)
@@ -694,11 +715,11 @@ namespace LowRezRogue {
                     if(gameState == GameState.playerMove)
                     {
                         gameState = GameState.sprint;
-                        InterfaceManager.ToggleSprint();
+                        InterfaceManager.ShowSprint();
                     } else if(gameState == GameState.sprint)
                     {
                         gameState = GameState.playerMove;
-                        InterfaceManager.ToggleSprint();
+                        InterfaceManager.CloseSprint();
                     }
                 }
 
@@ -872,7 +893,7 @@ namespace LowRezRogue {
             {
                 for(int i = 0; i < currentMap.enemies.Count; i++)
                 {
-                    if(p == currentMap.enemies[i].position && !currentMap.enemies[i].dead)
+                    if(p == currentMap.enemies[i].position && !currentMap.enemies[i].dying)
                         player.enemiesInRange.Add(currentMap.enemies[i]);
                 }
             }
@@ -928,9 +949,9 @@ namespace LowRezRogue {
 
                 if(enem.health <= 0)
                 {
-                    InterfaceManager.ShowDamage(666);       //666 is the code for death UI
-                    enem.dead = true;
-                    enem.TriggerAnimation("die", () => currentMap.enemies.Remove(enem));
+                    InterfaceManager.ShowDamage(666);       //666 is the code for death UI   
+                    enem.dying = true;
+                    enem.TriggerAnimation("die", () => { enem.dead = true; currentMap.enemies.Remove(enem); });
 
                 } else
                 {
@@ -947,8 +968,8 @@ namespace LowRezRogue {
                 {
                     //show interface
                     InterfaceManager.ShowDamage(666);       //666 is the code for death UI
-                    enem.dead = true;
-                    enem.TriggerAnimation("die", () => currentMap.enemies.Remove(enem));
+                    enem.dying = true;
+                    enem.TriggerAnimation("die", () => { enem.dead = true; currentMap.enemies.Remove(enem); });
                     player.position = posCache;
                 } else
                 {
@@ -979,6 +1000,7 @@ namespace LowRezRogue {
                 if(gameState == GameState.sprint && currentMap.map[player.position.X - 1, player.position.Y].walkable)
                 {
                     player.position.X -= player.sprintBonusMoves;
+                    player.TriggerAnimation("sprintLeft");
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Right) && lastKeyboardState.IsKeyUp(Keys.Right) && 
@@ -992,6 +1014,7 @@ namespace LowRezRogue {
                 if(gameState == GameState.sprint && currentMap.map[player.position.X + 1, player.position.Y].walkable)
                 {
                     player.position.X += player.sprintBonusMoves;
+                    player.TriggerAnimation("sprintRight");
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Up) && lastKeyboardState.IsKeyUp(Keys.Up) && 
@@ -1005,6 +1028,7 @@ namespace LowRezRogue {
                 if(gameState == GameState.sprint && currentMap.map[player.position.X, player.position.Y - 1].walkable)
                 {
                     player.position.Y -= player.sprintBonusMoves;
+                    player.TriggerAnimation("sprintUp");
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Down) && lastKeyboardState.IsKeyUp(Keys.Down) && 
@@ -1018,7 +1042,7 @@ namespace LowRezRogue {
                 if(gameState == GameState.sprint && currentMap.map[player.position.X, player.position.Y + 1].walkable)
                 {
                     player.position.Y += player.sprintBonusMoves;
-                
+                    player.TriggerAnimation("sprintDown");
                 }
             } 
             else if(keyboardState.IsKeyDown(Keys.Enter) && lastKeyboardState.IsKeyUp(Keys.Enter))
@@ -1053,7 +1077,7 @@ namespace LowRezRogue {
                         //combat !!!
                         for(int e = 0; e < currentMap.enemies.Count; e++)
                         {
-                            if(currentMap.enemies[e].position == player.position && !currentMap.enemies[e].dead)
+                            if(currentMap.enemies[e].position == player.position && !currentMap.enemies[e].dying)
                             {                               
                                 PlayerAttack(currentMap.enemies[e], positionCache);                              
                             }
@@ -1093,7 +1117,7 @@ namespace LowRezRogue {
             {
 
                 var enem = currentMap.enemies[i];
-                if(enem.dead)
+                if(enem.dead ||enem.dying)
                     continue;
 
                 bool tookAction = false;
@@ -1138,13 +1162,13 @@ namespace LowRezRogue {
 
                                 if(Math.Abs(xDist) >= Math.Abs(yDist))
                                 {
-                                    if(!EnemMoveTo(enem, x - enem.moveSpeed * xFactor, y))
-                                        if(!EnemMoveTo(enem, x, y - enem.moveSpeed * yFactor))
+                                    if(!EnemMoveTo(enem, x - enem.moveDistance * xFactor, y))
+                                        if(!EnemMoveTo(enem, x, y - enem.moveDistance * yFactor))
                                             tookAction = false;
                                 } else
                                 {
-                                    if(!EnemMoveTo(enem, x, y - enem.moveSpeed * yFactor))
-                                        if(!EnemMoveTo(enem, x - enem.moveSpeed * xFactor, y))
+                                    if(!EnemMoveTo(enem, x, y - enem.moveDistance * yFactor))
+                                        if(!EnemMoveTo(enem, x - enem.moveDistance * xFactor, y))
                                             tookAction = false;
                                 }
                             }
@@ -1165,22 +1189,22 @@ namespace LowRezRogue {
                         }
                     case MoveDirection.Up:
                         {
-                            EnemMoveTo(enem, x, y - enem.moveSpeed);
+                            EnemMoveTo(enem, x, y - enem.moveDistance);
                             break;
                         }
                     case MoveDirection.Right:
                         {
-                            EnemMoveTo(enem, x + enem.moveSpeed, y);
+                            EnemMoveTo(enem, x + enem.moveDistance, y);
                             break;
                         }
                     case MoveDirection.Down:
                         {
-                            EnemMoveTo(enem, x, y + enem.moveSpeed);
+                            EnemMoveTo(enem, x, y + enem.moveDistance);
                             break;
                         }
                     case MoveDirection.Left:
                         {
-                            EnemMoveTo(enem, x - enem.moveSpeed, y);
+                            EnemMoveTo(enem, x - enem.moveDistance, y);
                             break;
                         }
                 }
@@ -1231,7 +1255,7 @@ namespace LowRezRogue {
             {
                 player.sprintOnCoolDown = true;
                 sprintCounter = 0;
-                InterfaceManager.ToggleSprint();
+                InterfaceManager.CloseSprint();
                 InterfaceManager.ActivateSprint(false);
             }
             gameState = GameState.aiTurn;
@@ -1293,7 +1317,7 @@ namespace LowRezRogue {
             }
             for(int i = 0; i < currentMap.enemies.Count; i++)
             {
-                if(currentMap.enemies[i].position == p)
+                if(currentMap.enemies[i].position == p && !currentMap.enemies[i].dying)
                     return false;
             }
             return true;
@@ -1368,7 +1392,8 @@ namespace LowRezRogue {
                
                 for(int i = 0; i < currentMap.enemies.Count; i++)
                 {
-                    spriteBatch.Draw(playerAtlas, new Rectangle(currentMap.enemies[i].position * new Point(pixels, pixels), new Point(pixels, pixels)), currentMap.enemies[i].spriteRect, Color.White);
+                    if(!currentMap.enemies[i].dead)
+                        spriteBatch.Draw(playerAtlas, new Rectangle(currentMap.enemies[i].position * new Point(pixels, pixels), new Point(pixels, pixels)), currentMap.enemies[i].spriteRect, Color.White);
                 }
 
                 spriteBatch.Draw(playerAtlas, new Rectangle(player.position * new Point(pixels, pixels), new Point(pixels, pixels)), player.spriteRect, Color.White);
