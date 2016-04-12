@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <enemyTypes>
-  <enemy turnsPerMove="1" moveDistance="1" health="6" armor="2" damage="2" range="3" rangeAttacks="True" odds="0.4" name="skeleton"/>
-  <enemy turnsPerMove="2" moveDistance="1" health="4" armor="4" damage="4" range="0" rangeAttacks="True" odds="0.25" name="demon"/>
-  <enemy turnsPerMove="2" moveDistance="1" health="5" armor="3" damage="3" range="0" rangeAttacks="False" odds="0.25" name="fly"/>
-  <enemy turnsPerMove="2" moveDistance="1" health="5" armor="4" damage="4" range="0" rangeAttacks="False" odds="0.1" name="jumper"/>
+  <enemy turnsPerMove="0" moveDistance="1" health="6" armor="2" damage="2" range="3" rangeAttacks="True" odds="0.4" name="skeleton"/>
+  <enemy turnsPerMove="1" moveDistance="2" health="4" armor="4" damage="7" range="2" rangeAttacks="True" odds="0.30" name="demon"/>
+  <enemy turnsPerMove="0" moveDistance="1" health="5" armor="3" damage="3" range="0" rangeAttacks="False" odds="0.20" name="fly"/>
+  <enemy turnsPerMove="1" moveDistance="3" health="5" armor="4" damage="4" range="0" rangeAttacks="False" odds="0.1" name="jumper"/>
 </enemyTypes>

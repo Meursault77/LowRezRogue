@@ -458,8 +458,8 @@ namespace LowRezRogue {
                     smallest = rooms[i];
             }
 
-            //place something special in the smallest room
-            if(smallest != null)
+            //place artifact in the smallest room
+            if(!isOverworld && smallest != null)
             {
                 Point p = smallest.tiles[random.Next(0, smallest.tiles.Count)];
                 if(smallest.tiles.Count > 10) {
@@ -470,7 +470,8 @@ namespace LowRezRogue {
                 }               
                 map[p.X, p.Y].itemOnTop = items["artifact"];
             }
-
+            
+        
 
             //place entries
             int numOfEntries = 1;

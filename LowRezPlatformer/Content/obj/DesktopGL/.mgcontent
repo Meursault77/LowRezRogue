@@ -4,10 +4,10 @@
   <Platform>DesktopGL</Platform>
   <Config />
   <SourceFiles>
-    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/tiles.png</File>
-    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/player.png</File>
-    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/UI.png</File>
-    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Title.png</File>
-    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Menus.png</File>
+    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/tiles.png</File>
+    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/player.png</File>
+    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/UI.png</File>
+    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/Title.png</File>
+    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/Menus.png</File>
   </SourceFiles>
 </SourceFileCollection>

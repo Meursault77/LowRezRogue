@@ -323,8 +323,8 @@ namespace LowRezRogue {
         public int range;
         public bool rangeAttacks;
 
-        public int turnsPerMove;
-        public int countTimer = 0;
+        public int turnsToWait;
+        public int turnsToWaitCounter;
 
         public bool dead = false;
         public bool dying = false;
@@ -345,8 +345,9 @@ namespace LowRezRogue {
             moveDistance = type.moveDistance;
             range = type.range;
             rangeAttacks = type.rangeAttacks;
-            turnsPerMove = type.turnsPerMove;
+            turnsToWait = type.turnsPerMove;
 
+            turnsToWaitCounter = new Random().Next(0, turnsToWait + 1);
 
             currentAnim = animations[$"idle{type.index}"].StartAnimation();
             this.animations = animations;
@@ -1111,20 +1112,26 @@ namespace LowRezRogue {
        
         void ProcessEnemyAI() {
             Debug.WriteLine("Processing enemy AI");
-            
-
             for(int i = 0; i < currentMap.enemies.Count; i++)
             {
-
                 var enem = currentMap.enemies[i];
                 if(enem.dead ||enem.dying)
                     continue;
 
+                if (enem.turnsToWaitCounter < enem.turnsToWait)
+                {
+                    enem.turnsToWaitCounter++;
+                    continue;
+                }
+                else
+                    enem.turnsToWaitCounter = 0;
+
+
                 bool tookAction = false;
                 Point posCache = enem.position;
                 int x = enem.position.X;
-                int y = enem.position.Y;              
-
+                int y = enem.position.Y;
+                
                 for(int sX = x - 3; sX <= x + 3; sX++)
                 {
                     for(int sY = y - 3; sY <= y + 3; sY++)
@@ -1132,44 +1139,66 @@ namespace LowRezRogue {
                         if(!tookAction && player.position.X == sX && player.position.Y == sY)
                         {
                             tookAction = true;
+                            if(enem.rangeAttacks && TileDistance(enem.position, player.position) <= enem.range) {
+                                Debug.WriteLine("Enemy range attacks player");
+                                int damage = random.Next(enem.damage - 1, enem.damage + 2);
+                                enem.TriggerAnimation("attack");
+                                if (player.TakeDamage(damage))
+                                    return;
 
-                            if(AreTilesNeighbours(player.position, enem.position))
+                                if (player.health > 0)
+                                    enem.position = posCache;
+                                else
+                                    enem.position = player.position;                            
+                            }
+                            else if(AreTilesNeighbours(player.position, enem.position))
                             {
                                 //attack players
                                 Debug.WriteLine("Enemy attacks Player");
-                                int damage = new Random().Next(enem.damage - 1, enem.damage + 2);
+                                int damage = random.Next(enem.damage - 1, enem.damage + 2);
                                 enem.TriggerAnimation("attack");
                                 if(player.TakeDamage(damage))
                                 {           //returns true, if player dies!
                                     return;
                                 }
-                                enem.position = player.position;
-
                                 if(player.health > 0)
                                     enem.position = posCache;
+                                else
+                                    enem.position = player.position;
                             } else
                             {
                                 //Move towards player.
-                                Debug.WriteLine("Enemy moving towards player");
-                                int xDist = player.position.X - enem.position.X;
-                                int yDist = player.position.Y - enem.position.Y;
-                                int xFactor = 1;
-                                int yFactor = 1;
-                                if(xDist > 0)
-                                    xFactor = -1;
-                                if(yDist > 0)
-                                    yFactor = -1;
+                                Debug.WriteLine("Enemy moving towards player");                                                            
+                                int remainingMovement = enem.moveDistance;
+                                tookAction = false;
+                                while (remainingMovement > 0)
+                                {
+                                    int xDist = player.position.X - enem.position.X;
+                                    int yDist = player.position.Y - enem.position.Y;
+                                    int xFactor = 1;
+                                    int yFactor = 1;
+                                    if (xDist < 0)
+                                        xFactor = -1;
+                                    if (yDist < 0)
+                                        yFactor = -1;
+                                    if (Math.Abs(xDist) >= Math.Abs(yDist)) {
+                                        if(IsTileFree(enem.position.X + xFactor, enem.position.Y)) {
+                                            enem.position.X += xFactor;
+                                            remainingMovement--;
+                                            tookAction = true;
+                                            continue;
+                                        }
+                                    }
 
-                                if(Math.Abs(xDist) >= Math.Abs(yDist))
-                                {
-                                    if(!EnemMoveTo(enem, x - enem.moveDistance * xFactor, y))
-                                        if(!EnemMoveTo(enem, x, y - enem.moveDistance * yFactor))
-                                            tookAction = false;
-                                } else
-                                {
-                                    if(!EnemMoveTo(enem, x, y - enem.moveDistance * yFactor))
-                                        if(!EnemMoveTo(enem, x - enem.moveDistance * xFactor, y))
-                                            tookAction = false;
+                                    if (IsTileFree(enem.position.X, enem.position.Y + yFactor))
+                                    {
+                                        enem.position.Y += yFactor;
+                                        remainingMovement--;
+                                        tookAction = true;
+                                        continue;
+                                    }
+                                    remainingMovement--;
+
                                 }
                             }
                         } 
@@ -1287,12 +1316,17 @@ namespace LowRezRogue {
         }
         
         bool EnemMoveTo(Enemy enem, int x, int y) {
-            if(IsInMapRange(x, y) && IsTileFree(x, y))
+            if (IsInMapRange(x, y) && IsTileFree(x, y))
             {
                 enem.position = new Point(x, y);
                 return true;
-            } else
+            }
+            else
                 return false;
+        }
+
+        double TileDistance(Point a, Point b) {
+            return Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
         }
 
         bool IsInMapRange(int x, int y) {

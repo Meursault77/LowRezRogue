@@ -160,6 +160,8 @@ namespace LowRezRogue.Interface {
 
         public static UIObject sprintLogo;
 
+        static UIObject artifactPickUp;
+
         public static void Initialize(ContentManager Content) {
             uiAtlas = Content.Load<Texture2D>("UI");
             uiObjects = new List<UIObject>();
@@ -190,7 +192,7 @@ namespace LowRezRogue.Interface {
 
             sprintLogo = new UIObject(new Point(51, 43), new Point(58, 43), new Point(13, 11), UiTransitionState.closed, new Rectangle(0, 60, 13, 11), openWithAll: false, alsoRenderClosed: true);
 
-
+            artifactPickUp = new UIObject(new Point(30, 54), new Point(30, 64), new Point(22, 10), UiTransitionState.open, new Rectangle(20,40,22,10), openWithAll: false);
 
             uiObjects.Add(statsHealthNum);
             uiObjects.Add(statsHealthLogo);
@@ -202,11 +204,11 @@ namespace LowRezRogue.Interface {
             uiObjects.Add(statsArmorLogo);
             uiObjects.Add(rangeCombatLogo);
             uiObjects.Add(sprintLogo);
+            uiObjects.Add(artifactPickUp);
 
             uiObjects.Add(damageNum);
             uiObjects.Add(damageLogo);
 
-            //CloseAll();
 
         }
 
@@ -410,6 +412,7 @@ namespace LowRezRogue.Interface {
 
         public static void ShowArtifact(int piecesFound) {
             Debug.WriteLine("Called ShowAritfact in InterfaceManager");
+            artifactPickUp.Open(true, 100);
         }
 
     }
