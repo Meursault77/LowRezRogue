@@ -233,90 +233,6 @@ namespace LowRezRogue {
         }
         #endregion
 
-        public static Tile[,] CreateOverworld(int width, int height) {
-            var map = new Tile[width, height];
-            TileSet tileSet = GetTileSet(TileSets.overworld);
-            if(tileSet == null)
-            {
-                Debug.WriteLine("CreateOverworld couldnt load tileSet...");
-                return null;
-            }
-
-
-             // create Perlin noise function
-             PerlinNoise noise = new PerlinNoise(4, 0.5, 1.0, 1.0);
-             // generate clouds effect
-             float[,] texture = new float[height, width];
-             
-             for ( int x = 0; x < width; x++ )
-             {
-             	for ( int y = 0; y < height; y++ )
-             	{
-                    if(map[x,y].spriteRect != null)
-                    {
-                        continue;
-                    }
-
-                    float val = Math.Max(0.0f, Math.Min(1.0f, (float)noise.Function2D(x, y)) * 0.5f + 0.5f);
-                    if(val <= 0.7)
-                    {
-                        TileType tileType = GetRandomTileType(tileSet.normals);
-                        map[x, y] = new Tile(true, tileType);
-                    } else if(val <= 0.9)
-                    {
-                        var tileType = GetRandomTileType(tileSet.blocking);
-                        map[x, y] = new Tile(false, tileType);
-                    } else if(val <= 0.98)
-                    {
-                        var tileType = GetRandomTileType(tileSet.deadly);
-                        map[x, y] = new Tile(true, tileType);
-                    } else if(val <= 1.0)
-                    {
-                        var tileType = GetRandomTileType(tileSet.interaction);
-                        map[x, y] = new Tile(true, tileType);
-                    } else
-                    {
-                        TileType tileType = GetRandomTileType(tileSet.normals);
-                        map[x, y] = new Tile(true, tileType);
-                    }
-
-                    for(int i = 1; i <= map[x,y].tileType.xExtraTiles; i++)
-                    {
-                        if(x + 1 >= width)
-                            continue;
-
-                        var length = map[x, y].tileType.spriteRect.Length;
-                        Rectangle[] spriteRect = new Rectangle[length];
-
-                        for(int k = 0; k < length; k++)
-                        {
-                            spriteRect[k] = map[x, y].tileType.spriteRect[k];
-                            spriteRect[k].X += pixels;
-                        }
-                        map[x + i, y] = new Tile(map[x, y].walkable, map[x, y].tileType);
-                    }
-                    for(int i = 1; i <= map[x, y].tileType.yExtraTiles; i++)
-                    {
-                        if(y + 1 >= height)
-                            continue;
-
-                        var length = map[x, y].tileType.spriteRect.Length;
-                        Rectangle[] spriteRect = new Rectangle[length];
-
-                        for(int k = 0; k < length; k++)
-                        {
-                            spriteRect[k] = map[x, y].tileType.spriteRect[k];
-                            spriteRect[k].Y += pixels;
-                        }
-                        map[x, y + i] = new Tile(map[x, y].walkable, map[x, y].tileType);
-                    }
-
-                }
-            }
-
-            return map;
-        }
-
         static TileType GetRandomTileType(TileType[] typeArray) {
 
             if(typeArray.Length == 1)
@@ -348,12 +264,14 @@ namespace LowRezRogue {
         static Room mainRoom;
         static TileSet set;
         static Map workingOn;
-        static int tilesPerEnemy = 50;
+        static int tilesPerEnemy = 30;
 
 
         public static Map CreateDungeon(LowRezRogue game, int width, int height, int blockingTilePercentage, Dictionary<string, Item> items, EnemyType[] enemyTypes,  bool openCave = false, bool isOverworld = false) {
             MapGeneration.mapWidth = width;
             MapGeneration.mapHeight = height;
+
+            
 
             if(isOverworld)
                 set = GetTileSet(TileSets.overworld);
@@ -364,12 +282,12 @@ namespace LowRezRogue {
             workingOn = newMap;
             int openess = openCave ? 4 : 3;
             mainRoom = null;
-
+            
             map = new Tile[width, height];
             rooms = new List<Room>();
 
 
-            Random random = new Random();// 654320);
+            Random random = new Random();
             
             for(int x = 0; x < width; x++)
             {
@@ -433,7 +351,6 @@ namespace LowRezRogue {
 
             for(int i = 0; i < rooms.Count; i++)
             {
-               // Debug.WriteLine($"Room size: {rooms[i].tiles.Count}, #edge tiles: {rooms[i].edgeTiles.Count}, Connected Rooms {rooms[i].connectedRooms.Count}");
                 if(rooms[i].roomSize < 5)
                     rooms.RemoveAt(i);              
             }
@@ -509,42 +426,7 @@ namespace LowRezRogue {
                 }
                 map[entry.X, entry.Y] = new Tile(true, set.interaction[0]);
 
-            }
-
-            //place enemies
-            newMap.enemies = new List<Enemy>();
-            for(int r = 0; r < rooms.Count; r++)
-            {
-                int numOfEnemies = rooms[r].tiles.Count / tilesPerEnemy;
-
-                for(int c = 0; c < numOfEnemies; c++)
-                {
-                    Point p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
-                    if(rooms[r].tiles.Count > 7) {
-                        while(rooms[r].edgeTiles.Contains(p))
-                        {
-                            p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
-                        }
-                    }
-
-                    float rand = (float)random.Next(0, 101)/100.0f;
-                    int index = 0;
-                    for(int i = 0; i < enemyTypes.Length; i++)
-                    {
-                        if(enemyTypes[i].odds >= rand)
-                        {
-                            index = i;
-                            break;
-                        } else
-                        {
-                            rand -= enemyTypes[i].odds;
-                        }
-                    }
-
-                    newMap.enemies.Add(new Enemy(enemyTypes[index], p, game.enemyAnimations));
-                }
-            }
-            Debug.WriteLine("Enemies created: " + newMap.enemies.Count);
+            }           
 
             //place castle
             if(isOverworld)
@@ -596,23 +478,115 @@ namespace LowRezRogue {
                 pos = playerRoom.tiles[random.Next(0, playerRoom.tiles.Count)];
             }
 
+
+
             if(isOverworld)
             {
                 newMap.playerPositionOnLeave = pos;
                 //for testing
-                map[pos.X + 1, pos.Y].itemOnTop = items["oldSword"];
-                map[pos.X + 2, pos.Y].itemOnTop = items["fancySword"];
-                map[pos.X, pos.Y-1].itemOnTop = items["okayArmor"];
-                map[pos.X, pos.Y+1].itemOnTop = items["okayPotion"];
-                map[pos.X-1, pos.Y].itemOnTop = items["fancyRange"];
-
+                int r = random.Next(1, 4);
+                if(r == 1)
+                {
+                    //Point p1 = PlaceItemAroundPosition()
+                    PlaceItemAroundPosition(map, pos, items["oldSword"]);
+                    PlaceItemAroundPosition(map, pos, items["okayRange"]);
+                } else if(r == 2)
+                {
+                    PlaceItemAroundPosition(map, pos, items["okaySword"]);
+                    PlaceItemAroundPosition(map, pos, items["oldRange"]);
+                } else if(r == 3)
+                {
+                    PlaceItemAroundPosition(map, pos, items["okayRange"]);
+                    PlaceItemAroundPosition(map, pos, items["oldArmor"]);
+                }                 
             }
+
+            //place enemies
+            if(isOverworld)
+                tilesPerEnemy = 70;
+
+            newMap.enemies = new List<Enemy>();
+            for(int r = 0; r < rooms.Count; r++)
+            {
+                int numOfEnemies = rooms[r].tiles.Count / tilesPerEnemy;
+
+                if(rooms[r].tiles.Count >= 30 && numOfEnemies <= 5)
+                {
+                    numOfEnemies += 3;
+                }
+
+                for(int c = 0; c < numOfEnemies; c++)
+                {
+                    Point p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
+                    if(rooms[r].tiles.Count > 10)
+                    {
+                        while(rooms[r].edgeTiles.Contains(p))
+                        {
+                            p = rooms[r].tiles[random.Next(0, rooms[r].tiles.Count)];
+                        }
+                    }
+
+                    if(Distance(p, newMap.playerPositionOnLeave) < 4)
+                        continue;
+
+                    float rand = (float)random.Next(0, 101) / 100.0f;
+                    int index = 0;
+                    for(int i = 0; i < enemyTypes.Length; i++)
+                    {
+                        if(enemyTypes[i].odds >= rand)
+                        {
+                            index = i;
+                            break;
+                        } else
+                        {
+                            rand -= enemyTypes[i].odds;
+                        }
+                    }
+
+                    newMap.enemies.Add(new Enemy(enemyTypes[index], p, game.enemyAnimations));
+                }
+            }
+            Debug.WriteLine("Enemies created: " + newMap.enemies.Count);
+
+
             newMap.rooms = rooms;
             newMap.map = map;
 
             return newMap;
         }
 
+
+        static void PlaceItemAroundPosition(Tile[,] map, Point pos, Item item) {
+            Debug.WriteLine($"Placing item on {pos}");
+            if(map[pos.X, pos.Y + 1].walkable && map[pos.X, pos.Y + 1].itemOnTop == null)
+            {                
+                map[pos.X, pos.Y + 1].itemOnTop = item;
+            } else if(map[pos.X - 1, pos.Y].walkable && map[pos.X - 1, pos.Y].itemOnTop == null)
+            {
+                map[pos.X - 1, pos.Y].itemOnTop = item;
+            } else if(map[pos.X - 1, pos.Y - 1].walkable && map[pos.X - 1, pos.Y - 1].itemOnTop == null)
+            {
+                map[pos.X - 1, pos.Y - 1].itemOnTop = item;
+            } else if(map[pos.X + 1, pos.Y + 1].walkable && map[pos.X + 1, pos.Y + 1].itemOnTop == null)
+            {
+                map[pos.X + 1, pos.Y + 1].itemOnTop = item;
+            } else if(map[pos.X + 1, pos.Y].walkable && map[pos.X + 1, pos.Y].itemOnTop == null)
+            {
+                map[pos.X + 1, pos.Y].itemOnTop = item;
+            } else if(map[pos.X + 1, pos.Y - 1].walkable && map[pos.X + 1, pos.Y - 1].itemOnTop == null)
+            {
+                map[pos.X + 1, pos.Y - 1].itemOnTop = item;
+            } else if(map[pos.X, pos.Y - 1].walkable && map[pos.X, pos.Y - 1].itemOnTop == null)
+            {
+                map[pos.X, pos.Y - 1].itemOnTop = item;
+            } else if(map[pos.X - 1, pos.Y + 1].walkable && map[pos.X - 1, pos.Y + 1].itemOnTop == null)
+            {
+                map[pos.X - 1, pos.Y + 1].itemOnTop = item;
+            } else
+            {
+                map[pos.X + random.Next(-2,3), pos.Y + random.Next(-2, 3)].itemOnTop = item;
+            }
+        }
 
         static bool AreTilesNeighbours(Point p1, Point p2) {
             return AreTilesNeighbours(p1.X, p1.Y, p2.X, p2.Y);
@@ -628,6 +602,10 @@ namespace LowRezRogue {
                 return true;
 
             return false;
+        }
+
+        static int Distance(Point p1, Point p2) {
+            return (int)Math.Sqrt((p1.X - p2.X) * (p1.X - p2.X) + (p1.Y - p2.Y) * (p1.Y - p2.Y));
         }
 
         static bool DistanceToEntriesBigEnough(Point p) {

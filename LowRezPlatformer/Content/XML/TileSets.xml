@@ -3,15 +3,20 @@
   <tileSet name="overworld">
     <normal>
       <tile name="plain" x="0" y="0" odds="0.7"/>
+      <tile name="grass2" x="7" y="2" odds="0.05"/>
+      <tile name="flower3" x="6" y="2" odds="0.05"/>
       <tile name="grass" x="1" y="0" odds="0.1"/>
-      <tile name="flower" x="2" y="0" odds="0.1"/>
-      <tile name="flowers" x="3" y="0" odds="0.1"/>
+      <tile name="flower" x="2" y="0" odds="0.05"/>
+      <tile name="flowers" x="3" y="0" odds="0.05"/>
     </normal>
     <blocking>
-      <tile name="tree0" x="4" y="0" odds="0.35"/>
-      <tile name="tree1" x="5" y="0" odds="0.15"/>
-      <tile name="tree2" x="4" y="1" odds="0.30"/>
-      <tile name="tree3" x="5" y="1" odds="0.15"/>
+      <tile name="tree0" x="4" y="0" odds="0.20"/>
+      <tile name="tree1" x="5" y="0" odds="0.10"/>
+      <tile name="tree2" x="4" y="1" odds="0.20"/>
+      <tile name="tree3" x="5" y="1" odds="0.10"/>
+      <tile name="tree1" x="6" y="1" odds="0.10"/>
+      <tile name="tree2" x="7" y="1" odds="0.05"/>
+      <tile name="tree3" x="7" y="0" odds="0.20"/>
       <tile name="rock" x="6" y="0" odds="0.05"/>
     </blocking>
     <interaction>
@@ -32,8 +37,10 @@
       <tile name="b" x="9" y="2" odds="0.05"/>
       <tile name="c" x="9" y="3" odds="0.05"/>
       <tile name="d" x="9" y="4" odds="0.05"/>
-      <tile name="e" x="9" y="5" odds="0.1"/>
-      <tile name="f" x="10" y="1" odds="0.7"/>
+      <tile name="e" x="9" y="5" odds="0.025"/>
+      <tile name="f" x="12" y="1" odds="0.7"/>
+      <tile name="g" x="10" y="1" odds="0.05"/>
+      <tile name="h" x="11" y="1" odds="0.025"/>
     </normal>
     <blocking>
       <tile name="0" x="14" y="4" odds="0.25"/>
@@ -42,7 +49,7 @@
       <tile name="0" x="13" y="3" odds="0.25"/>    
     </blocking>
     <interaction>
-      <tile name="caveEntry" x="0" y="1" odds="0.1" type="entry"/>
+      <tile name="caveEntry" x="13" y="1" odds="0.1" type="entry"/>
       <tile name="smallHouse" x="1" y="1" odds="0.7" type="shop"/>
     </interaction>
     <deadly>

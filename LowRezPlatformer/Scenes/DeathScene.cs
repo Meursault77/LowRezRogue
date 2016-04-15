@@ -11,6 +11,8 @@ namespace LowRezRogue {
 
         Rectangle headlineSource = new Rectangle(6,64,64,18);
         Rectangle headlineDest = new Rectangle(6,0,64,18);
+        Rectangle headlineVictorySource = new Rectangle(6,192,64,18);
+
 
         Rectangle newGameSource = new Rectangle(12,85,42,13);
         Rectangle newGameDest = new Rectangle(10,22,42,13);
@@ -28,6 +30,8 @@ namespace LowRezRogue {
         Action quit;
         Action newGame;
 
+        bool didWin = false;
+
         public DeathScene(Action quit, Action newGame) {
             this.quit = quit;
             this.newGame = newGame;
@@ -39,6 +43,11 @@ namespace LowRezRogue {
 
         double animTimer = 0.0;
 
+        public void SetDeathOrVictory(bool won = false) {
+            didWin = won;
+        }
+
+
         public void Update(double deltaTime, KeyboardState keyboardState, KeyboardState lastKeyboardState) {
 
             animTimer += deltaTime;
@@ -46,10 +55,12 @@ namespace LowRezRogue {
 
             if((keyboardState.IsKeyDown(Keys.Enter) && (lastKeyboardState.IsKeyUp(Keys.Enter)) || ( keyboardState.IsKeyDown(Keys.Space) && lastKeyboardState.IsKeyUp(Keys.Space))))
             {
+                Sound.PlayClick();
                 if(arrowPos == 0)
                 {
                     if(newGame != null)
                     {
+                        Sound.StopLostVictory();
                         FadeScreen.StartFadeScreen(0.5, newGame);                        
                     }
                 } else if(arrowPos == 1)
@@ -60,6 +71,7 @@ namespace LowRezRogue {
             }
             if(keyboardState.IsKeyDown(Keys.Up) && lastKeyboardState.IsKeyUp(Keys.Up) || (keyboardState.IsKeyDown(Keys.Down) && lastKeyboardState.IsKeyUp(Keys.Down)))
             {
+                Sound.PlayClick();
                 if(arrowPos == 0)
                     arrowPos = 1;
                 else if(arrowPos == 1)
@@ -68,6 +80,7 @@ namespace LowRezRogue {
 
             if(animTimer >= 0.5)
             {
+                Sound.PlayClick();
                 if(arrowAnim == 0)
                     arrowAnim = 1;
                 else if(arrowAnim == 1)
@@ -81,7 +94,11 @@ namespace LowRezRogue {
 
         public void Render(SpriteBatch spriteBatch, Texture2D texture) {
             spriteBatch.Draw(texture, background, background, Color.White);
-            spriteBatch.Draw(texture, headlineDest, headlineSource, Color.White);
+            if(didWin)
+                spriteBatch.Draw(texture, headlineDest, headlineVictorySource, Color.White);
+            else
+                spriteBatch.Draw(texture, headlineDest, headlineSource, Color.White);
+
             spriteBatch.Draw(texture, newGameDest, newGameSource, Color.White);
             spriteBatch.Draw(texture, quitDest, quitSource, Color.White);
             if(arrowPos == 0)

@@ -4,10 +4,34 @@
   <Platform>DesktopGL</Platform>
   <Config />
   <SourceFiles>
-    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/tiles.png</File>
-    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/player.png</File>
-    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/UI.png</File>
-    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/Title.png</File>
-    <File>C:/Users/Administrator/Documents/LowRezRogue/LowRezRogue/LowRezPlatformer/Content/Menus.png</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/tiles.png</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/player.png</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/UI.png</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Title.png</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Menus.png</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/main_smash.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/main_jump.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/main_pressedKey1.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/main_pressedKey0.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/hit0.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/hit1.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/hit2.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/artifact_pickup.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/hitDemon1.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/keypress.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/hitDemon0.wav</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/click1.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/click2.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/click3.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/click4.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/switch0.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/switch1.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/switch2.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/switch3.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/switch4.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/switch5.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/click0.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/lost.ogg</File>
+    <File>C:/Users/Sören/Documents/Schafi/LowRezPlatformer/LowRezPlatformer/Content/Sounds/victory.ogg</File>
   </SourceFiles>
 </SourceFileCollection>

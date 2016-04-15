@@ -55,20 +55,30 @@ namespace LowRezRogue {
             //Vector2 player = playerPos.ToVector2();
 
 
-            if(player.X * mapPixels + 4< position.X)
-                position.X -= 1;
-            else if(player.X * mapPixels + 4 > position.X)
-                position.X += 1;            
-            //else
-            //   position.X = (playerPos.X + 0) * mapPixels + (mapPixels / 2);     //pos +1 for 4 tiles to right direction, instead of three 
-
+            if(player.X * mapPixels + 4 < position.X)
+            {
+                if(position.X - (player.X * mapPixels + 4) >= 8)
+                    position.X -= 2;
+                else 
+                    position.X -= 1;
+            } else if(player.X * mapPixels + 4 > position.X) {
+                if((player.X * mapPixels + 4) - position.X >= 8)
+                    position.X += 2;
+                else
+                    position.X += 1;
+            }
+            
             if(player.Y * mapPixels + 4 < position.Y)
-                position.Y -= 1;
+                if(position.Y - (player.Y * mapPixels + 4) >= 8)
+                    position.Y -= 2;
+                else
+                    position.Y -= 1;
             else if(player.Y * mapPixels + 4 > position.Y)
-                position.Y += 1;
-            //else
-            //    position.Y = (playerPos.Y + 0) * mapPixels + (mapPixels / 2);
-
+                if((player.Y * mapPixels + 4) - position.Y >= 8)
+                    position.Y += 2;
+                else
+                    position.Y += 1;
+            
 
             if(position.X < 32)
                 position.X = 32;

@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <items>
-  <item name="oldPotion" type="potion" health="2" armor="0" damage="0" rangeDamage="0" range="0" x="0" y="13"/>
-  <item name="okayPotion" type="potion" health="4" armor="0" damage="0" rangeDamage="0" range="0" x="1" y="13"/>
-  <item name="fancyPotion" type="potion" health="6" armor="0" damage="0" rangeDamage="0" range="0" x="2" y="13"/>
+  <item name="oldPotion" type="potion" health="4" armor="0" damage="0" rangeDamage="0" range="0" x="0" y="13"/>
+  <item name="okayPotion" type="potion" health="7" armor="0" damage="0" rangeDamage="0" range="0" x="1" y="13"/>
+  <item name="fancyPotion" type="potion" health="10" armor="0" damage="0" rangeDamage="0" range="0" x="2" y="13"/>
   
-  <item name="oldArmor" type="armor" health="0" armor="2" damage="0" rangeDamage="0" range="0" x="0" y="11"/>
-  <item name="okayArmor" type="armor" health="0" armor="4" damage="0" rangeDamage="0" range="0" x="1" y="11"/>
-  <item name="fancyArmor" type="armor" health="0" armor="6" damage="0" rangeDamage="0" range="0" x="2" y="11"/>
+  <item name="oldArmor" type="armor" health="0" armor="1" damage="0" rangeDamage="0" range="0" x="0" y="11"/>
+  <item name="okayArmor" type="armor" health="0" armor="2" damage="0" rangeDamage="0" range="0" x="1" y="11"/>
+  <item name="fancyArmor" type="armor" health="0" armor="3" damage="0" rangeDamage="0" range="0" x="2" y="11"/>
   
   <item name="oldSword" type="weapon" health="0" armor="0" damage="3" rangeDamage="0" range="0" x="0" y="12"/>
-  <item name="okaySword" type="weapon" health="0" armor="0" damage="3" rangeDamage="0" range="0" x="1" y="12"/>
+  <item name="okaySword" type="weapon" health="0" armor="0" damage="4" rangeDamage="0" range="0" x="1" y="12"/>
   <item name="fancySword" type="weapon" health="0" armor="0" damage="6" rangeDamage="0" range="0" x="2" y="12"/>
   
   <item name="oldRange" type="range" health="0" armor="0" damage="0" rangeDamage="3" range="2" x="0" y="10"/>
-  <item name="okayRange" type="range" health="0" armor="0" damage="0" rangeDamage="4" range="3" x="1" y="10"/>
+  <item name="okayRange" type="range" health="0" armor="0" damage="0" rangeDamage="3" range="3" x="1" y="10"/>
   <item name="fancyRange" type="range" health="0" armor="0" damage="0" rangeDamage="5" range="4" x="2" y="10"/>
 
   <item name="artifact" type="artifact" health="5" armor="0" damage="0" rangeDamage="0" range="0" x="0" y="14"/>

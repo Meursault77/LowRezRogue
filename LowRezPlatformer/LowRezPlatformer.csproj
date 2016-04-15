@@ -41,8 +41,8 @@
     <Compile Include="Camera.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Interface\InterfaceManager.cs" />
+    <Compile Include="Interface\Sound.cs" />
     <Compile Include="Map Generation\MapGeneration.cs" />
-    <Compile Include="Map Generation\PerlinNoise.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scenes\DeathScene.cs" />

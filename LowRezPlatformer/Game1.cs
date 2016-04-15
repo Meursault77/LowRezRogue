@@ -48,10 +48,10 @@ namespace LowRezRogue {
 
             spriteRect = new Rectangle(0, 0, 8, 8);
 
-            maxHealth = 10;
-            health = 10;
+            maxHealth = 22;
+            health = 16;
             damage = 2;
-            armor = 1;
+            armor = 0;
             rangeDamage = 0;            
             visionRange = 0;
 
@@ -60,7 +60,7 @@ namespace LowRezRogue {
             noDamage = false;
 
             sprintBonusMoves = 2;
-            sprintCoolDown = 10;
+            sprintCoolDown = 5;
             sprintOnCoolDown = false;
 
 
@@ -131,7 +131,7 @@ namespace LowRezRogue {
                             oldItem = UnequipItem(ItemType.armor);
                         }
                         itemArmor = newItem;
-                        armor += newItem.armor;
+                        armor = newItem.armor;
                         InterfaceManager.UpdateArmor(armor);
                         break;
                     }
@@ -142,7 +142,7 @@ namespace LowRezRogue {
                             oldItem = UnequipItem(ItemType.weapon);
                         }
                         itemWeapon = newItem;
-                        damage += newItem.damage;
+                        damage = newItem.damage;
                         InterfaceManager.UpdateDamage(damage);
                         break;
                     }
@@ -153,7 +153,7 @@ namespace LowRezRogue {
                             oldItem = UnequipItem(ItemType.range);
                         }
                         itemRangeWeapon = newItem;
-                        rangeDamage += newItem.rangeDamage;
+                        rangeDamage = newItem.rangeDamage;
                         visionRange = newItem.range;
                         InterfaceManager.UpdateRangeDamage(rangeDamage);
                         break;
@@ -424,7 +424,7 @@ namespace LowRezRogue {
         Camera camera;
 
         public enum GameScene { mainMenu, game, pause, unitInfo, death }
-        public static GameScene gameScene = GameScene.game;
+        public static GameScene gameScene = GameScene.mainMenu;
 
         public enum GameState { playerMove, aiTurn, playerRangeCombat, sprint, animation }
         GameState gameState = GameState.playerMove;
@@ -450,6 +450,7 @@ namespace LowRezRogue {
         Texture2D tileAtlas;
         Texture2D playerAtlas;
         Texture2D menuAtlas;
+        Texture2D uiAtlas;
 
         int artifactPiecesFound;
         int maxArtifactPieces = 5;
@@ -468,7 +469,7 @@ namespace LowRezRogue {
         }  
        
         protected override void Initialize() {
-
+            Window.Title = "Head Spin Rogue - #lowrezjam";
             graphics.PreferredBackBufferHeight = 512;
             graphics.PreferredBackBufferWidth = 512;
             //TargetElapsedTime = TimeSpan.FromTicks(166666);
@@ -477,6 +478,8 @@ namespace LowRezRogue {
             SpriteBatchEx.GraphicsDevice = GraphicsDevice;
 
             camera = new Camera(GraphicsDevice.Viewport);
+            Sound.Initialize(Content);
+
 
             InterfaceManager.Initialize(Content);
             LoadAnimationData();
@@ -509,13 +512,13 @@ namespace LowRezRogue {
             Random random = new Random();
 
             allMaps = new Map[6];
-            allMaps[0] = CreateDungeon(this, 64, 64, 33, items, enemyTypes, isOverworld: true);
+            allMaps[0] = CreateDungeon(this, 48, 48, 33, items, enemyTypes, isOverworld: true);
 
             allMaps[1] = CreateDungeon(this, 48, 48, 35, items, enemyTypes);
             allMaps[2] = CreateDungeon(this, 32, 32, 36, items, enemyTypes);
-            allMaps[3] = CreateDungeon(this, 64, 64, 38, items, enemyTypes);
+            allMaps[3] = CreateDungeon(this, 64, 64, 41, items, enemyTypes);
             allMaps[4] = CreateDungeon(this, 48, 48, 40, items, enemyTypes);
-            allMaps[5] = CreateDungeon(this, 64, 64, 40, items, enemyTypes);
+            allMaps[5] = CreateDungeon(this, 48, 48, 39, items, enemyTypes);
             currentMap = allMaps[0];
 
             int j = 1;
@@ -531,7 +534,7 @@ namespace LowRezRogue {
             }
 
 
-            player = new Player(currentMap.playerPositionOnLeave, playerAnimations, PlayerDeath, OnArtifactFound);
+            player = new Player(currentMap.playerPositionOnLeave, playerAnimations, OnPlayerDeath, OnArtifactFound);
         }
 
         void LoadAnimationData() {
@@ -647,7 +650,8 @@ namespace LowRezRogue {
             tileAtlas = Content.Load<Texture2D>("tiles");
             playerAtlas = Content.Load<Texture2D>("player");
             menuAtlas = Content.Load<Texture2D>("Menus");
-            
+            uiAtlas = Content.Load<Texture2D>("UI");
+
         }
 
         protected override void UnloadContent() {
@@ -655,6 +659,7 @@ namespace LowRezRogue {
             tileAtlas.Dispose();
             playerAtlas.Dispose();
             menuAtlas.Dispose();
+            Sound.UnloadContent();
         }
 
 
@@ -729,9 +734,10 @@ namespace LowRezRogue {
                     || (keyboardState.IsKeyDown(Keys.F10) && lastKeyboardState.IsKeyUp(Keys.F10)))
                 {
                     gameScene = GameScene.pause;
+                    pauseMenu.pauseState = PauseMenu.PauseState.pause;
+                    pauseMenu.GetArtifacts(artifactPiecesFound);
                     return;
                 }
-
 
                 if(uiTickTimer >= 0.0333)
                 {
@@ -764,31 +770,34 @@ namespace LowRezRogue {
 
 
                 //General game input, not player action specific
-                if(keyboardState.IsKeyDown(Keys.F12) && lastKeyboardState.IsKeyUp(Keys.F12))
+                /*if(keyboardState.IsKeyDown(Keys.F12) && lastKeyboardState.IsKeyUp(Keys.F12))
                 {
                     if(camera.zoom == 8f)
                         camera.zoom = 1f;
                     else if(camera.zoom == 1f)
                         camera.zoom = 8f;
-                }
-
+                }*/
+                /*if(keyboardState.IsKeyDown(Keys.F9) && lastKeyboardState.IsKeyUp(Keys.F9))
+                {
+                    artifactPiecesFound = maxArtifactPieces;
+                }*/
                 if(keyboardState.IsKeyDown(Keys.LeftControl) && lastKeyboardState.IsKeyUp(Keys.LeftControl))
                 {
                     InterfaceManager.ToggleAll();
                 }
-                if(keyboardState.IsKeyDown(Keys.LeftAlt) && lastKeyboardState.IsKeyUp(Keys.LeftAlt))
+                /*if(keyboardState.IsKeyDown(Keys.LeftAlt) && lastKeyboardState.IsKeyUp(Keys.LeftAlt))
                 {
                     InterfaceManager.ShowDamage(5);
-                }
+                }*/
                 if(keyboardState.IsKeyDown(Keys.H) && lastKeyboardState.IsKeyUp(Keys.H))
                 {
                     InterfaceManager.ToggleHealth();
                 }
-                if(keyboardState.IsKeyDown(Keys.F1) && lastKeyboardState.IsKeyUp(Keys.F1))
+                /*if(keyboardState.IsKeyDown(Keys.F1) && lastKeyboardState.IsKeyUp(Keys.F1))
                 {
                     player.noDamage = !player.noDamage;
-                }
-                if(keyboardState.IsKeyDown(Keys.F5) && lastKeyboardState.IsKeyUp(Keys.F5))
+                }*/
+                /*if(keyboardState.IsKeyDown(Keys.F5) && lastKeyboardState.IsKeyUp(Keys.F5))
                 {
                     if(currentMap == allMaps[0])
                         currentMap = allMaps[1];
@@ -802,7 +811,7 @@ namespace LowRezRogue {
                         currentMap = allMaps[5];
                     else if(currentMap == allMaps[5])
                         currentMap = allMaps[0];
-                }
+                }*/
             }
 
 
@@ -910,6 +919,7 @@ namespace LowRezRogue {
             {
                 if(keyboardState.IsKeyDown(Keys.Left) && lastKeyboardState.IsKeyUp(Keys.Left))
                 {
+                    Sound.PlayClick();
                     if(player.enemiesInRange.IndexOf(player.targetedEnemy) == 0)
                         player.targetedEnemy = player.enemiesInRange[player.enemiesInRange.Count - 1];
                     else
@@ -917,6 +927,7 @@ namespace LowRezRogue {
                 }
                 if(keyboardState.IsKeyDown(Keys.Right) && lastKeyboardState.IsKeyUp(Keys.Right))
                 {
+                    Sound.PlayClick();
                     if(player.enemiesInRange.IndexOf(player.targetedEnemy) == player.enemiesInRange.Count - 1)
                         player.targetedEnemy = player.enemiesInRange[0];
                     else
@@ -934,17 +945,29 @@ namespace LowRezRogue {
 
         }
 
+        int CalculateDamageToPlayer(Enemy attacking) {  
+            int damage = random.Next(attacking.damage - 1, attacking.damage + 2) - player.armor;
+            if(damage < 2)
+                damage = 1;
+
+            return damage;
+        }
+
         void PlayerAttack(Enemy enem, Point posCache, bool range = false) {
             Debug.WriteLine("Player attacking an enemy");
 
             if(range)
             {
+                Sound.PlayHit();
                 player.TriggerAnimation("rangeAttack");
                 int damage;
                 if(AreTilesNeighbours(enem.position, player.position))
                     damage = 1;
                 else
-                    damage = random.Next(player.rangeDamage - 1, player.rangeDamage + 2);
+                    damage = random.Next(player.rangeDamage - 1, player.rangeDamage + 2) - enem.armor;
+
+                if(damage < 1)
+                    damage = 1;
                 
                 enem.health -= damage;
 
@@ -953,7 +976,7 @@ namespace LowRezRogue {
                     InterfaceManager.ShowDamage(666);       //666 is the code for death UI   
                     enem.dying = true;
                     enem.TriggerAnimation("die", () => { enem.dead = true; currentMap.enemies.Remove(enem); });
-
+                    SpawnItem(enem.position);
                 } else
                 {
                     InterfaceManager.ShowDamage(damage);
@@ -961,8 +984,11 @@ namespace LowRezRogue {
 
             } else
             {
+                Sound.PlayHit();
                 player.TriggerAnimation("attack");
-                int damage = new Random().Next(player.damage - 1, player.damage + 2);
+                int damage = random.Next(player.damage - 1, player.damage + 2) - enem.armor;
+                if(damage < 1)
+                    damage = 1;
                 enem.health -= damage;
 
                 if(enem.health <= 0)
@@ -971,6 +997,7 @@ namespace LowRezRogue {
                     InterfaceManager.ShowDamage(666);       //666 is the code for death UI
                     enem.dying = true;
                     enem.TriggerAnimation("die", () => { enem.dead = true; currentMap.enemies.Remove(enem); });
+                    SpawnItem(enem.position);
                     player.position = posCache;
                 } else
                 {
@@ -1002,7 +1029,8 @@ namespace LowRezRogue {
                 {
                     player.position.X -= player.sprintBonusMoves;
                     player.TriggerAnimation("sprintLeft");
-                }
+                } else
+                    player.TriggerAnimation("walk");
             } 
             else if(keyboardState.IsKeyDown(Keys.Right) && lastKeyboardState.IsKeyUp(Keys.Right) && 
                 player.position.X < currentMap.mapWidth - 1 && currentMap.map[player.position.X + 1, player.position.Y].walkable)
@@ -1016,7 +1044,8 @@ namespace LowRezRogue {
                 {
                     player.position.X += player.sprintBonusMoves;
                     player.TriggerAnimation("sprintRight");
-                }
+                } else
+                    player.TriggerAnimation("walk");
             } 
             else if(keyboardState.IsKeyDown(Keys.Up) && lastKeyboardState.IsKeyUp(Keys.Up) && 
                 player.position.Y > 0 && currentMap.map[player.position.X, player.position.Y - 1].walkable)
@@ -1030,7 +1059,8 @@ namespace LowRezRogue {
                 {
                     player.position.Y -= player.sprintBonusMoves;
                     player.TriggerAnimation("sprintUp");
-                }
+                } else
+                    player.TriggerAnimation("walk");
             } 
             else if(keyboardState.IsKeyDown(Keys.Down) && lastKeyboardState.IsKeyUp(Keys.Down) && 
                 player.position.Y < currentMap.mapHeight - 1 && currentMap.map[player.position.X, player.position.Y + 1].walkable)
@@ -1044,17 +1074,21 @@ namespace LowRezRogue {
                 {
                     player.position.Y += player.sprintBonusMoves;
                     player.TriggerAnimation("sprintDown");
-                }
+                } else
+                    player.TriggerAnimation("walk");
             } 
             else if(keyboardState.IsKeyDown(Keys.Enter) && lastKeyboardState.IsKeyUp(Keys.Enter))
             {
+                Sound.PlayClick();
                 EndTurn();
                 return;
             }
 
-            if(!madeAction) {
+            if(!madeAction)
+            {
                 return;
-            }
+            } 
+                
 
             if(currentMap.map[player.position.X, player.position.Y].tileType.tileType == TileTypes.deadly)
             {
@@ -1094,6 +1128,7 @@ namespace LowRezRogue {
                     {
                         Debug.WriteLine("Theeee Castle!!!");
                         player.position = positionCache;
+                        OnCastleAttack();
                         break;
                     }
                 case InteractionType.shop:
@@ -1141,8 +1176,12 @@ namespace LowRezRogue {
                             tookAction = true;
                             if(enem.rangeAttacks && TileDistance(enem.position, player.position) <= enem.range) {
                                 Debug.WriteLine("Enemy range attacks player");
-                                int damage = random.Next(enem.damage - 1, enem.damage + 2);
+                                int damage = CalculateDamageToPlayer(enem);
+                                if(AreTilesNeighbours(enem.position, player.position))
+                                    damage = 1;
                                 enem.TriggerAnimation("attack");
+                                player.TriggerAnimation("getHit");
+                                Sound.PlayHit();
                                 if (player.TakeDamage(damage))
                                     return;
 
@@ -1155,8 +1194,10 @@ namespace LowRezRogue {
                             {
                                 //attack players
                                 Debug.WriteLine("Enemy attacks Player");
-                                int damage = random.Next(enem.damage - 1, enem.damage + 2);
+                                int damage = CalculateDamageToPlayer(enem);
                                 enem.TriggerAnimation("attack");
+                                player.TriggerAnimation("getHit");
+                                Sound.PlayHit();
                                 if(player.TakeDamage(damage))
                                 {           //returns true, if player dies!
                                     return;
@@ -1183,6 +1224,7 @@ namespace LowRezRogue {
                                         yFactor = -1;
                                     if (Math.Abs(xDist) >= Math.Abs(yDist)) {
                                         if(IsTileFree(enem.position.X + xFactor, enem.position.Y)) {
+                                            enem.TriggerAnimation("walk");
                                             enem.position.X += xFactor;
                                             remainingMovement--;
                                             tookAction = true;
@@ -1247,7 +1289,25 @@ namespace LowRezRogue {
 
         #region small stuff
 
+        void OnCastleAttack() {
+            FadeScreen.StartFadeScreen();
+            if(artifactPiecesFound == maxArtifactPieces)
+            {
+                Sound.PlayLostVictory(false);
+                deathScene.SetDeathOrVictory(true);
+                FadeScreen.StartFadeScreen(0.3, () => {
+                    gameScene = GameScene.death; });
+            } else if(artifactPiecesFound < maxArtifactPieces)
+            {
+                Sound.PlayLostVictory(true);
+                deathScene.SetDeathOrVictory(false) ;
+                FadeScreen.StartFadeScreen(0.3, () => {
+                    gameScene = GameScene.death; });
+            }
+        }
+
         void OnArtifactFound() {
+            Sound.Play("artifact_pickup");
             artifactPiecesFound += 1;
             if(artifactPiecesFound > maxArtifactPieces) {
                 Debug.WriteLine("Too many artifact pieces spawned...");
@@ -1303,12 +1363,110 @@ namespace LowRezRogue {
             gameScene = GameScene.game;
         }
 
-        void PlayerDeath() {
+        void OnPlayerDeath() {
+            player.TriggerAnimation("die", null);
+            Sound.PlayLostVictory(true);
             gameState = GameState.animation;
-            FadeScreen.StartFadeScreen(0.3,() => {
-                gameScene = GameScene.death;
-                
-            });
+            FadeScreen.StartFadeScreen(0.3, () => {
+                gameScene = GameScene.death; });
+           
+        }
+
+        void SpawnItem(Point pos) {
+            Item itemToSpawn = null;
+            double r = random.NextDouble();
+            double odds = 0.35;
+            if(player.health <= 5)
+                odds = 0.7;          
+
+            Debug.WriteLine($"Item Spawn random: {r}");
+
+            if(r <= odds)
+            {
+                if(player.health <= 5)
+                {
+                    if(r <= odds / 5.0)
+                    {
+                        itemToSpawn = items["fancyPotion"];
+                    } else if(r <= odds / 2.0)
+                    {
+                        itemToSpawn = items["okayPotion"];
+                    } else
+                        itemToSpawn = items["oldPotion"];                   
+                }
+
+                if(itemToSpawn == null)
+                {
+                    ItemType type = (ItemType)random.Next(0, 4);
+
+                    switch(type)
+                    {
+                        case ItemType.armor:
+                            {
+                                if(r <= odds / 10.0)
+                                {
+                                    itemToSpawn = items["fancyArmor"];
+                                } else if(r <= odds / 2.0)
+                                {
+                                    itemToSpawn = items["okayArmor"];
+                                } else
+                                    itemToSpawn = items["oldArmor"];
+                                break;
+                            }
+                        case ItemType.weapon:
+                            {
+                                if(r <= odds / 10.0)
+                                {
+                                    itemToSpawn = items["fancySword"];
+                                } else if(r <= odds / 2.0)
+                                {
+                                    itemToSpawn = items["okaySword"];
+                                } else
+                                    itemToSpawn = items["oldSword"];
+                                break;
+                            }
+                        case ItemType.range:
+                            {
+                                if(r <= odds / 10.0)
+                                {
+                                    itemToSpawn = items["fancyRange"];
+                                } else if(r <= odds / 2.0)
+                                {
+                                    itemToSpawn = items["okayRange"];
+                                } else
+                                    itemToSpawn = items["oldRange"];
+                                break;
+                            }
+                        case ItemType.potion:
+                            {
+                                if(r <= odds / 10.0)
+                                {
+                                    itemToSpawn = items["fancyPotion"];
+                                } else if(r <= odds / 2.0)
+                                {
+                                    itemToSpawn = items["okayPotion"];
+                                } else
+                                    itemToSpawn = items["oldPotion"];
+                                break;
+                            }
+                    }
+
+                }
+            } else
+                return;
+
+            Debug.WriteLine($"Spawning {itemToSpawn.name}");
+
+            Point[] arr = { new Point(pos.X + 1, pos.Y), new Point(pos.X, pos.Y + 1), new Point(pos.X - 1, pos.Y), new Point(pos.X, pos.Y - 1) };
+            foreach(Point p in arr)
+            {
+                if(IsTileFree(p) && currentMap.map[p.X, p.Y].itemOnTop == null)
+                {
+                    currentMap.map[p.X, p.Y].itemOnTop = itemToSpawn;
+                    break;
+                }
+            }
+
         }
 
         public void PlaceItemOnMap(Item item, Point pos) {
@@ -1376,10 +1534,7 @@ namespace LowRezRogue {
         #endregion
 
         protected override void Draw(GameTime gameTime) {
-            Window.Title = (1 / gameTime.ElapsedGameTime.TotalSeconds).ToString();
             GraphicsDevice.Clear(Color.TransparentBlack);
-
-
             if(gameScene == GameScene.mainMenu)
             {
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
@@ -1388,7 +1543,7 @@ namespace LowRezRogue {
             else if(gameScene == GameScene.pause)
             {
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
-                pauseMenu.Render(spriteBatch, menuAtlas);
+                pauseMenu.Render(spriteBatch, menuAtlas, uiAtlas);
             }
             else if(gameScene == GameScene.death)
             {
@@ -1433,7 +1588,7 @@ namespace LowRezRogue {
                 spriteBatch.Draw(playerAtlas, new Rectangle(player.position * new Point(pixels, pixels), new Point(pixels, pixels)), player.spriteRect, Color.White);
                 spriteBatch.End();
                 spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, transformMatrix: camera.onlyZoom);
-                InterfaceManager.Render(spriteBatch);
+                InterfaceManager.Render(spriteBatch, uiAtlas);
                 spriteBatch.End();
             }
             spriteBatch.End();

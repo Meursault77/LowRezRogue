@@ -153,20 +153,31 @@ namespace LowRezRogue {
 
         double animationFrameTime = 0.166;
 
+        bool triggeredSmashSound = false;
+        Rectangle toTestSmashSound = new Rectangle(0,9*16,16,16);
+
         public void Update(double deltaTime, KeyboardState keyboardState, KeyboardState lastKeyboardState) {
 
             animationFrameTimer += deltaTime;
             animationBackgroundTimer += deltaTime;
 
+            if(!triggeredSmashSound && player.spriteRect == toTestSmashSound)
+            {
+                triggeredSmashSound = true;
+                Sound.Play("main_smash");
+            }
+
+
             if(keyboardState.IsKeyDown(Keys.Enter) && lastKeyboardState.IsKeyUp(Keys.Enter))
             {
+                Sound.PlayPressedKey();
                 FadeScreen.StartFadeScreen(0.5,
                         () => { LowRezRogue.gameScene = LowRezRogue.GameScene.game; this.UnloadContent(); }, null);
             }
 
             if(pressA.active && keyboardState.IsKeyDown(Keys.A) && lastKeyboardState.IsKeyUp(Keys.A))
             {
-
+                Sound.PlayPressedKey();
                 switch(introState)
                 {
                     case IntroState.notStarted:
@@ -246,7 +257,8 @@ namespace LowRezRogue {
                         }
                     case IntroState.one:
                         {
-                          
+                            if(!pressA.active)
+                                Sound.PlaySwitch();
                             if(introLines[0].Width < 48)
                                 introLines[0].Width += 4;
                             else
@@ -268,6 +280,8 @@ namespace LowRezRogue {
                         }
                     case IntroState.two:
                         {
+                            if(!pressA.active)
+                                Sound.PlaySwitch();
                             if(introLines[3].Width < 48)
                                 introLines[3].Width += 4;
                             else
@@ -291,6 +305,8 @@ namespace LowRezRogue {
                         }
                     case IntroState.three:
                         {
+                            if(!pressA.active)
+                                Sound.PlaySwitch();
                             if(introLines[7].Width < 48)
                                 introLines[7].Width += 4;
                             else
@@ -345,8 +361,6 @@ namespace LowRezRogue {
                         for(int i = 0; i <= 2; i++)
                         {
                             spriteBatch.Draw(mainAtlas, new Rectangle(8, 26 + introLines[i].Y, introLines[i].Width, 7), introLines[i], Color.White);
-
-
                         }
                         break;
                     }
@@ -363,7 +377,6 @@ namespace LowRezRogue {
                         for(int i = 7; i <= 10; i++)
                         {
                             spriteBatch.Draw(mainAtlas, new Rectangle(8, 26 + introLines[i - 7].Y, introLines[i].Width, 7), introLines[i], Color.White);
-
                         }
                         break;
                     }
