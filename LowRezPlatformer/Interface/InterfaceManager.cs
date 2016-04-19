@@ -68,14 +68,27 @@ namespace LowRezRogue.Interface {
             if(transitionState == UiTransitionState.transitionClose)
             {
                 if(closedPosition.X < openPosition.X)
+                {
                     currentPosition.X -= transitionSpeed;
-                else if(closedPosition.X > openPosition.X)
+                    if(currentPosition.X < closedPosition.X)
+                        currentPosition.X = closedPosition.X;
+                } else if(closedPosition.X > openPosition.X) { 
                     currentPosition.X += transitionSpeed;
+                    if(currentPosition.X > closedPosition.X)
+                        currentPosition.X = closedPosition.X;
+                }
 
                 if(closedPosition.Y < openPosition.Y)
+                {
                     currentPosition.Y -= transitionSpeed;
-                else if(closedPosition.Y > openPosition.Y)
+                    if(currentPosition.Y < closedPosition.Y)
+                        currentPosition.Y = closedPosition.Y;
+                } else if(closedPosition.Y > openPosition.Y)
+                {
                     currentPosition.Y += transitionSpeed;
+                    if(currentPosition.Y > closedPosition.Y)
+                        currentPosition.Y = closedPosition.Y;
+                }
 
                 if(currentPosition == closedPosition)
                     transitionState = UiTransitionState.closed;
@@ -83,15 +96,28 @@ namespace LowRezRogue.Interface {
             } else if(transitionState == UiTransitionState.transitionOpen)
             {
                 if(openPosition.X < closedPosition.X)
+                {
                     currentPosition.X -= transitionSpeed;
-                else if(openPosition.X > closedPosition.X)
+                    if(currentPosition.X < openPosition.X)
+                        currentPosition.X = openPosition.X;
+                } else if(openPosition.X > closedPosition.X)
+                {
                     currentPosition.X += transitionSpeed;
+                    if(currentPosition.X > openPosition.X)
+                        currentPosition.X = openPosition.X;
+                }
 
                 if(openPosition.Y < closedPosition.Y)
+                {
                     currentPosition.Y -= transitionSpeed;
-                else if(openPosition.Y > closedPosition.Y)
+                    if(currentPosition.Y < openPosition.Y)
+                        currentPosition.Y = openPosition.Y;
+                } else if(openPosition.Y > closedPosition.Y)
+                {
                     currentPosition.Y += transitionSpeed;
-
+                    if(currentPosition.Y > openPosition.Y)
+                        currentPosition.Y = openPosition.Y;
+                }
 
                 if(currentPosition == openPosition)
                     transitionState = UiTransitionState.open;
